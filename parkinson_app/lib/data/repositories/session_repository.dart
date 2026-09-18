@@ -132,6 +132,55 @@ class SessionRepository {
     ];
   }
 
+  /// Latest stored analysis result (dual Layer 1/Layer 2 shape once
+  /// monitoring is active). Null when signed out or when no result
+  /// exists yet — callers show readiness shells instead.
+  Future<Map<String, dynamic>?> watchLatestResult() async {
+    if (backendReady) {
+      final snap = await _db!
+          .collection('users')
+          .doc(_uid)
+          .collection('results')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) return null;
+      return snap.docs.first.data();
+    }
+    if (restReady) {
+      final docs = await _restService!.listCollection(
+        ['users', _restUid!, 'results'],
+        pageSize: 1,
+      );
+      if (docs.isEmpty) return null;
+      return docs.first..remove('_docId');
+    }
+    return null;
+  }
+
+  /// Frozen personal baseline document, if one has been built.
+  /// Shape: {features: {name: {median, mad, mean, std, ...}}, ...}.
+  Future<Map<String, dynamic>?> fetchBaseline() async {
+    if (backendReady) {
+      final doc = await _db!
+          .collection('users')
+          .doc(_uid)
+          .collection('baselines')
+          .doc('current')
+          .get();
+      if (!doc.exists) return null;
+      return doc.data();
+    }
+    if (restReady) {
+      final doc = await _restService!.getDocument(
+        ['users', _restUid!, 'baselines', 'current'],
+      );
+      doc?.remove('_docId');
+      return doc;
+    }
+    return null;
+  }
+
   /// Backend dispatch contract (Stage 6.3): the analysis trigger reads
   /// duration_sec, keystroke_count, and quality_flags straight off the
   /// document, so every write path stamps them here — never assumed.

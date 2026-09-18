@@ -3,14 +3,107 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../checkin/providers/checkin_provider.dart';
 import '../../typing_test/providers/familiarization_provider.dart';
 
-/// Dashboard home shell (Stage 7.1 structure, pre-analysis states).
-/// Shows real local counts only — no screening statuses exist until the
-/// backend analysis pipeline (Stage 6 + trained models) produces results,
-/// so cards describe readiness instead of inventing outcomes.
+/// View-model for one result card. Pure mapping from a stored result
+/// document — unit-tested, no widgets involved.
+class LayerCardData {
+  final String title;
+  final String status;
+  final String message;
+  final bool building;
+
+  const LayerCardData({
+    required this.title,
+    required this.status,
+    required this.message,
+    this.building = false,
+  });
+
+  Color get color {
+    switch (status) {
+      case 'attention':
+        return AppColors.statusAttention;
+      case 'watch':
+      case 'device_mismatch':
+        return AppColors.statusWatch;
+      default:
+        return AppColors.statusNormal;
+    }
+  }
+}
+
+class DualCards {
+  final LayerCardData layer1;
+  final LayerCardData layer2;
+  final String primaryFocus;
+
+  const DualCards({
+    required this.layer1,
+    required this.layer2,
+    required this.primaryFocus,
+  });
+}
+
+/// Map a stored result document to cards. Returns null when there is no
+/// result yet (caller shows readiness shells). Never invents a status:
+/// unknown shapes fall back to readiness text.
+DualCards? resultCardsFor(Map<String, dynamic>? result) {
+  if (result == null) return null;
+  final layer1raw = result['layer1'];
+  final layer2raw = result['layer2'];
+  if (layer1raw is Map && layer2raw is Map) {
+    final layer1 = Map<String, dynamic>.from(layer1raw);
+    final layer2 = Map<String, dynamic>.from(layer2raw);
+    final building = layer2['confidence'] == 'building';
+    return DualCards(
+      layer1: LayerCardData(
+        title: 'General comparison (Layer 1)',
+        status: '${layer1['status']}',
+        message: '${layer1['message']}',
+      ),
+      layer2: LayerCardData(
+        title: 'Personal trend (Layer 2)',
+        status: '${layer2['status']}',
+        message: building
+            ? 'Still learning your pattern — check back as more sessions '
+                'come in.'
+            : '${layer2['message']}',
+        building: building,
+      ),
+      primaryFocus: '${result['primary_focus'] ?? 'layer1'}',
+    );
+  }
+  if (layer1raw is Map) {
+    final layer1 = Map<String, dynamic>.from(layer1raw);
+    return DualCards(
+      layer1: LayerCardData(
+        title: 'General comparison (Layer 1)',
+        status: '${layer1['status']}',
+        message: '${layer1['message']}',
+      ),
+      layer2: const LayerCardData(
+        title: 'Personal trend (Layer 2)',
+        status: 'normal',
+        message: 'Your personal baseline is still building.',
+        building: true,
+      ),
+      primaryFocus: 'layer1',
+    );
+  }
+  return null;
+}
+
+final latestResultProvider =
+    FutureProvider<Map<String, dynamic>?>((ref) async {
+  return ref.watch(sessionRepositoryProvider).watchLatestResult();
+});
+
+/// Dashboard home (Stage 7.1): live dual cards when a stored result
+/// exists, readiness shells otherwise. Counts are always real.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -26,9 +119,11 @@ class DashboardScreen extends ConsumerWidget {
     final fam = ref.watch(familiarizationProvider);
     final sessionsAsync = ref.watch(localSessionsProvider);
     final checkIns = ref.watch(checkInProvider);
+    final resultAsync = ref.watch(latestResultProvider);
     final sessions = sessionsAsync.valueOrNull ?? [];
     final screeningSessions =
         sessions.where((s) => !s.isFamiliarization).length;
+    final cards = resultCardsFor(resultAsync.valueOrNull);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -41,33 +136,40 @@ class DashboardScreen extends ConsumerWidget {
           ),
           Text('$screeningSessions screening sessions stored on this device'),
           const SizedBox(height: 16),
-          // Layer 1 card — readiness state only, never a result.
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.groups_outlined),
-              title: const Text('General comparison (Layer 1)'),
-              subtitle: Text(
-                fam.screeningReady
-                    ? 'Practice complete — comparison activates with analysis.'
-                    : 'Complete ${fam.requiredSessions} practice session(s) first. '
-                        'Practice is never scored.',
+          if (cards == null) ...[
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.groups_outlined),
+                title: const Text('General comparison (Layer 1)'),
+                subtitle: Text(
+                  fam.screeningReady
+                      ? 'Practice complete — comparison activates with analysis.'
+                      : 'Complete ${fam.requiredSessions} practice session(s) first. '
+                          'Practice is never scored.',
+                ),
               ),
             ),
-          ),
-          // Layer 2 card — building state only, never a result.
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.trending_up_outlined),
-              title: const Text('Personal trend (Layer 2)'),
-              subtitle: Text(
-                'Building — needs 10+ sessions across at least 5 days '
-                'on your usual keyboard '
-                '($screeningSessions/${AppConstants.minimumSessionsForBaseline}+).',
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.trending_up_outlined),
+                title: const Text('Personal trend (Layer 2)'),
+                subtitle: Text(
+                  'Building — needs 10+ sessions across at least 5 days '
+                  'on your usual keyboard '
+                  '($screeningSessions/${AppConstants.minimumSessionsForBaseline}+).',
+                ),
               ),
             ),
-          ),
+          ] else ...[
+            if (cards.primaryFocus == 'layer2') ...[
+              _ResultCard(data: cards.layer2, big: true),
+              _ResultCard(data: cards.layer1, big: false),
+            ] else ...[
+              _ResultCard(data: cards.layer1, big: true),
+              _ResultCard(data: cards.layer2, big: false),
+            ],
+          ],
           const SizedBox(height: 8),
-          // Quick stats row — real counts.
           Row(
             children: [
               _StatChip(
@@ -88,7 +190,6 @@ class DashboardScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Next action card — contextual prompt.
           Card(
             child: ListTile(
               leading: const Icon(Icons.arrow_forward_outlined),
@@ -116,7 +217,6 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          // Session history preview — last 3 real sessions.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -159,6 +259,33 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ResultCard extends StatelessWidget {
+  final LayerCardData data;
+  final bool big;
+  const _ResultCard({required this.data, required this.big});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(
+          data.building
+              ? Icons.hourglass_empty_outlined
+              : Icons.circle,
+          color: data.color,
+          size: big ? 32 : 24,
+        ),
+        title: Text(
+          data.title,
+          style: big ? Theme.of(context).textTheme.headlineSmall : null,
+        ),
+        subtitle: Text(data.message),
+        isThreeLine: true,
       ),
     );
   }
