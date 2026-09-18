@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/providers/analysis_mode_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/layout/top_bar.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/gradient_background.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
+import '../../typing_test/providers/last_result_provider.dart';
 import '../widgets/metric_trend_chart.dart';
 import 'dashboard_screen.dart' show latestResultProvider;
 
@@ -30,6 +33,69 @@ class DetailedMetricsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(analysisModeProvider);
+    // Layer 1: show immediate typing result in Insights tab (per user request)
+    if (mode == AnalysisMode.layer1) {
+      final result = ref.watch(latestResultProvider).valueOrNull;
+      final local = ref.watch(lastLocalLayer1ResultProvider);
+      final layer1 = result?['layer1'] ?? local;
+      final features = ref.watch(lastLocalFeaturesProvider);
+      if (layer1 == null) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Insights')),
+          body: GradientBackground(
+            child: ListView(padding: const EdgeInsets.all(16), children: [
+              const EmptyState(
+                icon: Icons.science_outlined,
+                title: 'No Layer 1 analysis yet',
+                subtitle: 'Complete a typing session to see your population comparison here. Insights shows the same result as the dedicated analysis page.',
+              ),
+              Card(child: ListTile(leading: const Icon(Icons.history_outlined), title: const Text('Session history'), onTap: () => context.go('/insights/history'))),
+            ]),
+          ),
+        );
+      }
+      return Scaffold(
+        appBar: const AppTopBar(title: 'Insights', subtitle: 'Layer 1 · Quick Analysis'),
+        body: GradientBackground(
+          child: ListView(padding: const EdgeInsets.all(16), children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Your typing-pattern comparison', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  Text(layer1['message'] as String? ?? '', style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 8),
+                  Text('This is a research screening signal and not a medical diagnosis.', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
+                  if (layer1['pd_probability'] is num) ...[
+                    const SizedBox(height: 8),
+                    Text('Model output: ${(layer1['pd_probability'] as num).toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                  ],
+                ]),
+              ),
+            ),
+            if (features != null && features.isNotEmpty)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Session metrics', style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    Text('Typing speed: ${(features['typing_speed'] ?? 0).toStringAsFixed(2)} keys/s', style: Theme.of(context).textTheme.bodySmall),
+                    Text('Hold time: ${(features['ht_mean'] ?? 0).toStringAsFixed(0)} ms', style: Theme.of(context).textTheme.bodySmall),
+                    Text('Flight time: ${(features['ft_mean'] ?? 0).toStringAsFixed(0)} ms', style: Theme.of(context).textTheme.bodySmall),
+                    Text('Inter-key latency: ${(features['ikl_mean'] ?? 0).toStringAsFixed(0)} ms', style: Theme.of(context).textTheme.bodySmall),
+                  ]),
+                ),
+              ),
+            Card(child: ListTile(leading: const Icon(Icons.history_outlined), title: const Text('Session history'), onTap: () => context.go('/insights/history'))),
+            Card(child: ListTile(leading: const Icon(Icons.open_in_new), title: const Text('View dedicated Layer 1 insights'), onTap: () => context.go('/insights/layer1'))),
+          ]),
+        ),
+      );
+    }
+
     final resultAsync = ref.watch(latestResultProvider);
     final baselineAsync = ref.watch(baselineProvider);
     if (resultAsync.isLoading || baselineAsync.isLoading) {

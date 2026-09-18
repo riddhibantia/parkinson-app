@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers/app_mode_provider.dart';
 import '../../../shared/widgets/design_system.dart';
 import '../../../shared/widgets/gradient_background.dart';
+import '../../../shared/widgets/parkin_trace_logo.dart';
 import '../providers/auth_provider.dart';
 
 String? _validateEmail(String? v) {
@@ -94,7 +95,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 24),
+                      const Center(child: ParkinTraceLogo(size: 56)),
+                      const SizedBox(height: 16),
                       Text(
                         'Welcome back',
                         style: Theme.of(context).textTheme.headlineMedium,

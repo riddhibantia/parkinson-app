@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/widgets/design_system.dart';
 import '../../../shared/widgets/gradient_background.dart';
+import '../../../shared/widgets/parkin_trace_logo.dart';
 import '../providers/auth_provider.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -62,7 +63,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 24),
+                      const Center(child: ParkinTraceLogo(size: 56)),
+                      const SizedBox(height: 16),
                       Text(
                         'Create account',
                         style: Theme.of(context).textTheme.headlineMedium,

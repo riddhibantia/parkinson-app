@@ -67,31 +67,41 @@ class ParkinTraceLogo extends StatelessWidget {
 class _LogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18)
+    // Subtle Parkinson-related trace: a clean, low-amplitude waveform integrated with the P stem
+    // Minimal, geometric, not cartoonish — hints at motor monitoring, not diagnosis
+    final tracePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.22)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 1.3
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
-    // Subtle keyboard keys at bottom arc
-    final keyPaint = Paint()..color = Colors.white.withValues(alpha: 0.85);
     final center = Offset(size.width / 2, size.height / 2);
-    final r = size.width * 0.38;
-    // three tiny rounded rects for keys
-    for (var i = -1; i <= 1; i++) {
-      final rect = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx + i * size.width * 0.15, center.dy + size.height * 0.22), width: size.width * 0.12, height: size.width * 0.08),
-        Radius.circular(2),
-      );
-      canvas.drawRRect(rect, keyPaint);
-    }
-
-    // Waveform arc at top
+    // Delicate horizontal trace at lower third — 3 gentle oscillations (tremor-inspired but abstract)
+    final y = center.dy + size.height * 0.18;
     final path = Path();
-    path.moveTo(center.dx - r * 0.7, center.dy - size.height * 0.12);
-    path.quadraticBezierTo(center.dx - r * 0.35, center.dy - size.height * 0.22, center.dx, center.dy - size.height * 0.12);
-    path.quadraticBezierTo(center.dx + r * 0.35, center.dy - size.height * 0.02, center.dx + r * 0.7, center.dy - size.height * 0.12);
-    canvas.drawPath(path, paint);
+    final startX = center.dx - size.width * 0.28;
+    final endX = center.dx + size.width * 0.28;
+    path.moveTo(startX, y);
+    // 3 smooth waves, low amplitude, research-grade restraint
+    final w = (endX - startX) / 3;
+    for (var i = 0; i < 3; i++) {
+      final x1 = startX + w * i + w * 0.25;
+      final x2 = startX + w * i + w * 0.5;
+      final x3 = startX + w * i + w * 0.75;
+      final x4 = startX + w * (i + 1);
+      // subtle amplitude variation to feel organic, not mechanical
+      final amp = (i == 1) ? size.height * 0.028 : size.height * 0.018;
+      path.cubicTo(x1, y - amp, x2, y + amp, x3, y - amp * 0.5);
+      path.lineTo(x4, y);
+    }
+    canvas.drawPath(path, tracePaint);
+
+    // Tiny keyboard hint: two minimal dots at baseline, very subtle
+    final dotPaint = Paint()..color = Colors.white.withValues(alpha: 0.55);
+    for (var i = -1; i <= 1; i += 2) {
+      canvas.drawCircle(Offset(center.dx + i * size.width * 0.09, y + size.height * 0.09), size.width * 0.012, dotPaint);
+    }
   }
 
   @override
