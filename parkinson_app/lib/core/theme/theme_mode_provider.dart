@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Stored as int index in ThemeMode.values.
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   static const _key = 'theme_mode_v1';
-  ThemeModeNotifier() : super(ThemeMode.dark) {
+  ThemeModeNotifier() : super(ThemeMode.light) {
     _load();
   }
 

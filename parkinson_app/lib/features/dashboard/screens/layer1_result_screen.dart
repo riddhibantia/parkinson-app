@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/layout/top_bar.dart';
+import '../../../core/theme/app_colors.dart';
 
 import '../../../shared/widgets/gradient_background.dart';
 import '../../../shared/widgets/glass_card.dart';
@@ -61,7 +62,37 @@ class Layer1ResultScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-              StatusBadge(status: '${layer1['status']}'),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: Column(
+                  children: [
+                    Text('YOUR LAYER 1 RESULT',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(letterSpacing: 0.6, color: Theme.of(context).textTheme.bodySmall?.color)),
+                    const SizedBox(height: 8),
+                    Text('Model output', style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      (layer1['pd_probability'] is num) ? (layer1['pd_probability'] as num).toStringAsFixed(2) : '—',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 48, height: 1),
+                    ),
+                    Text('Output from the population-level research model',
+                        style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _statusColor('${layer1['status']}', context).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(_interpretation('${layer1['status']}'), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
               Text(
                 'Your typing features were compared with patterns learned from research datasets.',
@@ -132,6 +163,8 @@ class Layer1ResultScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                const _InteractiveMetricChart(),
               ],
               if (layer1['top_contributors'] is List &&
                   (layer1['top_contributors'] as List).isNotEmpty) ...[
@@ -230,6 +263,109 @@ class _FeatureRow extends StatelessWidget {
               context,
             ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+Color _statusColor(String status, BuildContext context) {
+  switch (status) {
+    case 'attention':
+      return AppColors.statusAttention;
+    case 'watch':
+      return AppColors.statusWatch;
+    default:
+      return AppColors.statusNormal;
+  }
+}
+
+String _interpretation(String status) {
+  switch (status) {
+    case 'attention':
+      return 'MORE DISTINCTLY DIFFERENT — The model identified a stronger difference from the reference typing patterns.';
+    case 'watch':
+      return 'DEVIATED FROM REFERENCE — Your typing pattern differs from the reference patterns used by the model.';
+    default:
+      return 'WITHIN EXPECTED RESEARCH RANGE — Your typing pattern is broadly within the range represented by the reference data.';
+  }
+}
+
+class _InteractiveMetricChart extends ConsumerStatefulWidget {
+  const _InteractiveMetricChart();
+
+  @override
+  ConsumerState<_InteractiveMetricChart> createState() => _InteractiveMetricChartState();
+}
+
+class _InteractiveMetricChartState extends ConsumerState<_InteractiveMetricChart> {
+  String _selected = 'Hold time';
+  static const _metrics = ['Hold time', 'Flight time', 'Inter-key latency', 'Typing speed', 'Consistency'];
+  static const _ref = {
+    'Hold time': 108.0,
+    'Flight time': 85.0,
+    'Inter-key latency': 210.0,
+    'Typing speed': 4.2,
+    'Consistency': 0.26,
+  };
+  static const _keys = {
+    'Hold time': 'ht_mean',
+    'Flight time': 'ft_mean',
+    'Inter-key latency': 'ikl_mean',
+    'Typing speed': 'typing_speed',
+    'Consistency': 'session_consistency',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final features = ref.watch(lastLocalFeaturesProvider);
+    final yourVal = features?[_keys[_selected]!] ?? 0.0;
+    final refVal = _ref[_selected] ?? 1.0;
+    final ratio = (yourVal / (refVal == 0 ? 1 : refVal)).clamp(0.3, 1.7);
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Feature profile', style: Theme.of(context).textTheme.titleSmall),
+              const Spacer(),
+              DropdownButton<String>(
+                value: _selected,
+                items: [for (final m in _metrics) DropdownMenuItem(value: m, child: Text(m, style: Theme.of(context).textTheme.bodySmall))],
+                onChanged: (v) => setState(() => _selected = v ?? _selected),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('Your session vs Research reference', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    Container(height: 14, decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(6))),
+                    const SizedBox(height: 4),
+                    Text('Your: ${yourVal.toStringAsFixed(yourVal < 10 ? 2 : 0)}', style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  children: [
+                    Container(height: 14, width: 60 + ratio * 40, decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.35), borderRadius: BorderRadius.circular(6))),
+                    const SizedBox(height: 4),
+                    Text('Ref: ${refVal.toStringAsFixed(refVal < 10 ? 2 : 0)}', style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Interactive: switch metric to compare. Bars scaled for display.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
         ],
       ),
     );

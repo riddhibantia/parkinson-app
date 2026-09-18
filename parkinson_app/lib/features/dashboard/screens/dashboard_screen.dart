@@ -280,31 +280,52 @@ class DashboardScreen extends ConsumerWidget {
           if (loading) ...[
             const CardShimmer(),
           ] else if (displayCards == null) ...[
-            GlassCard(
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.groups_outlined),
-                title: const Text('General comparison (Layer 1)'),
-                subtitle: Text(
-                  fam.screeningReady
-                      ? 'Practice complete — comparison activates with analysis.'
-                      : 'Complete ${fam.requiredSessions} practice session(s) first. '
-                            'Practice is never scored.',
+            if (ref.watch(analysisModeProvider) == AnalysisMode.layer1) ...[
+              GlassCard(
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.science_outlined),
+                  title: const Text('Population comparison'),
+                  subtitle: Text(
+                    effectiveScreeningCount == 0
+                        ? 'Complete 1–2 typing sessions to see your research comparison.'
+                        : 'Session ${effectiveScreeningCount + 1} of 2 — start next session',
+                  ),
                 ),
               ),
-            ),
-            GlassCard(
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.trending_up_outlined),
-                title: const Text('Personal trend (Layer 2)'),
-                subtitle: Text(
-                  'Building — needs 10+ sessions across at least 5 days '
-                  'on your usual keyboard '
-                  '($effectiveScreeningCount/${AppConstants.minimumSessionsForBaseline}+).',
+            ] else if (ref.watch(analysisModeProvider) == AnalysisMode.layer2) ...[
+              GlassCard(
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.timeline_outlined),
+                  title: const Text('Personal monitoring'),
+                  subtitle: Text(
+                    'Building — needs 10+ sessions across at least 5 days '
+                    '($effectiveScreeningCount/${AppConstants.minimumSessionsForBaseline}+).',
+                  ),
                 ),
               ),
-            ),
+            ] else ...[
+              GlassCard(
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.groups_outlined),
+                  title: const Text('General comparison (Layer 1)'),
+                  subtitle: const Text('Complete 1–2 typing sessions to see your research comparison.'),
+                ),
+              ),
+              GlassCard(
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.trending_up_outlined),
+                  title: const Text('Personal trend (Layer 2)'),
+                  subtitle: Text(
+                    'Building — needs 10+ sessions across at least 5 days '
+                    '($effectiveScreeningCount/${AppConstants.minimumSessionsForBaseline}+).',
+                  ),
+                ),
+              ),
+            ],
           ] else ...[
             if (isDemo)
               Padding(
@@ -376,34 +397,81 @@ class DashboardScreen extends ConsumerWidget {
                   displayCards.layer2.status != 'normal'))
             _ShapContributors(result: effectiveResult),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              _StatChip(label: 'Sessions', value: '$effectiveScreeningCount'),
-              const SizedBox(width: 8),
-              _StatChip(
-                label: 'Practice',
-                value:
-                    '${fam.completedPracticeSessions}/${fam.requiredSessions}',
-              ),
-              const SizedBox(width: 8),
-              _StatChip(label: 'Check-ins', value: '${checkIns.length}'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.arrow_forward_outlined),
-              title: Text(
-                !fam.screeningReady
-                    ? 'Finish practice to begin screening'
-                    : 'Type today to keep your profile up to date',
-              ),
-              subtitle: const Text(
-                'Baseline needs sessions across multiple days, not all at once.',
-              ),
-              onTap: () => context.go('/type'),
+          if (ref.watch(analysisModeProvider) == AnalysisMode.layer1) ...[
+            Row(
+              children: [
+                _StatChip(label: 'Sessions', value: '$effectiveScreeningCount / 2'),
+                const SizedBox(width: 8),
+                _StatChip(label: 'Latest', value: displayCards?.layer1.status ?? '—'),
+                const SizedBox(width: 8),
+                _StatChip(label: 'Check-ins', value: '${checkIns.length}'),
+              ],
             ),
-          ),
+          ] else if (ref.watch(analysisModeProvider) == AnalysisMode.layer2) ...[
+            Row(
+              children: [
+                _StatChip(label: 'Sessions', value: '$effectiveScreeningCount / 10'),
+                const SizedBox(width: 8),
+                _StatChip(label: 'Days', value: '${(effectiveScreeningCount / 2).ceil().clamp(0, 5)} / 5'),
+                const SizedBox(width: 8),
+                _StatChip(label: 'Check-ins', value: '${checkIns.length}'),
+              ],
+            ),
+          ] else ...[
+            Row(
+              children: [
+                _StatChip(label: 'Sessions', value: '$effectiveScreeningCount'),
+                const SizedBox(width: 8),
+                _StatChip(
+                  label: 'Practice',
+                  value: '${fam.completedPracticeSessions}/${fam.requiredSessions}',
+                ),
+                const SizedBox(width: 8),
+                _StatChip(label: 'Check-ins', value: '${checkIns.length}'),
+              ],
+            ),
+          ],
+          const SizedBox(height: 16),
+          if (ref.watch(analysisModeProvider) == AnalysisMode.layer1)
+            GlassCard(
+              child: ListTile(
+                leading: const Icon(Icons.arrow_forward_outlined),
+                title: Text(effectiveScreeningCount == 0 ? 'Start typing session' : 'View Layer 1 insights'),
+                subtitle: const Text('1–2 sessions for population comparison.'),
+                onTap: () => context.go(effectiveScreeningCount == 0 ? '/type/structured' : '/insights/layer1'),
+              ),
+            )
+          else
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.arrow_forward_outlined),
+                title: Text(
+                  !fam.screeningReady
+                      ? 'Finish practice to begin screening'
+                      : 'Type today to keep your profile up to date',
+                ),
+                subtitle: const Text(
+                  'Baseline needs sessions across multiple days, not all at once.',
+                ),
+                onTap: () => context.go('/type'),
+              ),
+            ),
+          if (ref.watch(analysisModeProvider) == AnalysisMode.layer1)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: OutlinedButton(
+                onPressed: () => context.go('/onboarding/layer-selection'),
+                child: const Text('Explore Layer 2 — Personal Monitoring'),
+              ),
+            ),
+          if (ref.watch(analysisModeProvider) == AnalysisMode.layer2)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: OutlinedButton(
+                onPressed: () => context.go('/onboarding/layer-selection'),
+                child: const Text('Explore Layer 1 — Quick Analysis'),
+              ),
+            ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.checklist_outlined),
