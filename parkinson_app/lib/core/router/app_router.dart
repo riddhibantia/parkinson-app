@@ -9,6 +9,7 @@ import '../../features/dashboard/screens/detailed_metrics_screen.dart';
 import '../../features/dashboard/screens/history_screen.dart';
 import '../../features/dashboard/screens/layer1_result_screen.dart';
 import '../../features/dashboard/screens/layer2_result_screen.dart';
+import '../../features/splash/screens/splash_screen.dart';
 import '../../features/checkin/screens/checkin_screen.dart';
 import '../../features/onboarding/screens/consent_screen.dart';
 import '../../features/onboarding/screens/context_profile_screen.dart';
@@ -45,7 +46,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   // The WelcomeScreen sets AppMode.demo, then router sees signedIn || isDemo via hasOnboarded guard bypass.
   // We keep simple: if at /login and already demo, allow /home
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/splash',
     redirect: (context, state) {
       final loc = state.matchedLocation;
       final isAuthRoute = loc == '/login' || loc == '/signup';
@@ -59,6 +60,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
