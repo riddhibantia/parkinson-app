@@ -6,14 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../checkin/providers/checkin_provider.dart';
 import '../../profile/providers/profile_context_provider.dart';
+import '../../reminders/providers/reminder_prefs_provider.dart';
 
 /// Settings (Stage 9.3): what is collected, JSON export, full deletion.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   Future<void> _export(BuildContext context, WidgetRef ref) async {
-    final sessions =
-        await ref.read(sessionRepositoryProvider).loadLocalSessions();
+    final sessions = await ref
+        .read(sessionRepositoryProvider)
+        .loadLocalSessions();
     final checkIns = ref.read(checkInProvider);
     final profile = ref.read(profileContextProvider);
     final data = {
@@ -72,9 +74,9 @@ class SettingsScreen extends ConsumerWidget {
       ref.read(checkInProvider.notifier).clear();
       ref.invalidate(localSessionsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Local data deleted.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Local data deleted.')));
       }
     }
   }
@@ -97,6 +99,41 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          Card(
+            child: SwitchListTile(
+              title: const Text('Daily reminder'),
+              subtitle: Text(
+                ref.watch(reminderPrefsProvider).enabled
+                    ? 'Nudge around ${ref.watch(reminderPrefsProvider).hour}:00 if you have not typed yet'
+                    : 'Turn on for a gentle daily typing nudge (on-device only)',
+              ),
+              value: ref.watch(reminderPrefsProvider).enabled,
+              onChanged: (v) =>
+                  ref.read(reminderPrefsProvider.notifier).setEnabled(v),
+            ),
+          ),
+          if (ref.watch(reminderPrefsProvider).enabled)
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.schedule_outlined),
+                title: const Text('Reminder time'),
+                subtitle: Text(
+                  '${ref.watch(reminderPrefsProvider).hour}:00 local time',
+                ),
+                trailing: DropdownButton<int>(
+                  value: ref.watch(reminderPrefsProvider).hour,
+                  items: [
+                    for (var h = 7; h <= 22; h++)
+                      DropdownMenuItem(value: h, child: Text('$h:00')),
+                  ],
+                  onChanged: (h) {
+                    if (h != null) {
+                      ref.read(reminderPrefsProvider.notifier).setHour(h);
+                    }
+                  },
+                ),
+              ),
+            ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.download_outlined),

@@ -4,9 +4,12 @@ Pipeline rule: `submit_session` only validates and persists data.
 `run_analysis` (Firestore trigger) is the single live analysis path via
 services/pipeline.py, so a session can never be analysed twice and the
 async SHAP flow stays explicit. SHAP explanation itself (Stage 4.5)
-remains pending by design — results carry shap_status for it.
+runs as a follow-up trigger on newly created pending results — it
+attaches top contributors when available and marks unavailable
+otherwise, never as a health claim.
 
 Deploy (Stage 11.1): firebase deploy --only functions
+Requires Blaze to deploy functions, enablement handled outside code.
 """
 
 from firebase_admin import firestore, initialize_app
@@ -114,6 +117,62 @@ def reset_baseline(req: https_fn.CallableRequest):
             code="unauthenticated", message="Sign-in required")
     return reset_user_baseline(
         firestore.client(), req.auth.uid, _CloudModelStore())
+
+
+@firestore_fn.on_document_created(
+    document="users/{userId}/results/{resultId}")
+def fill_shap_explanation(event: firestore_fn.CloudEvent) -> None:
+    """Async SHAP follow-up (Stage 4.5): if a new result is pending,
+    explain the associated session's typing features and attach the
+    top contributors. Failures degrade to shap_status=unavailable —
+    never a health result, never a retry storm."""
+    data = event.data.to_dict() or {}
+    if data.get("shap_status") != "pending":
+        return
+    layer1 = data.get("layer1") or {}
+    if layer1.get("pd_probability") is None:
+        return
+    user_id = event.params["userId"]
+    result_id = event.params["resultId"]
+    session_id = data.get("session_id")
+    if not session_id:
+        return
+    db = firestore.client()
+    try:
+        session_doc = (
+            db.collection("users").document(user_id)
+            .collection("sessions").document(session_id).get()
+        )
+        session_data = session_doc.to_dict() or {}
+        # Build feature dict from stored session fields (flattened by
+        # pipeline._resolve_features) or from raw events fallback.
+        from services.explain import explain_session
+        # Prefer stored typed features; if session only has raw events,
+        # explain will raise KeyError -> treated as unavailable.
+        feature_dict = {
+            k: session_data.get(k) for k in
+            ["ht_mean","ht_std","ft_mean","ft_std","ikl_mean","ikl_std",
+             "left_ht_mean","right_ht_mean","hand_asymmetry",
+             "pause_frequency","typing_speed","session_consistency",
+             "backspace_rate"]
+            if session_data.get(k) is not None
+        }
+        contributors = explain_session(feature_dict)
+        db.collection("users").document(user_id).collection("results").document(
+            result_id).set(
+                {"layer1": {**layer1, "top_contributors": contributors},
+                 "shap_status": "completed"},
+                merge=True,
+            )
+    except Exception:
+        # Missing artifact, missing shap dep, incomplete features, etc.
+        # Mark unavailable so the UI can show "explanation unavailable"
+        # without implying anything about health.
+        try:
+            db.collection("users").document(user_id).collection("results").document(
+                result_id).set({"shap_status": "unavailable"}, merge=True)
+        except Exception:
+            pass
 
 
 @https_fn.on_call()

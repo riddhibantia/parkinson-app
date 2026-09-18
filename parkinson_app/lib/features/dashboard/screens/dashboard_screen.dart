@@ -6,7 +6,9 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../checkin/providers/checkin_provider.dart';
+import '../../reminders/providers/reminder_prefs_provider.dart';
 import '../../typing_test/providers/familiarization_provider.dart';
+import '../providers/streak_provider.dart';
 
 /// View-model for one result card. Pure mapping from a stored result
 /// document — unit-tested, no widgets involved.
@@ -70,7 +72,7 @@ DualCards? resultCardsFor(Map<String, dynamic>? result) {
         status: '${layer2['status']}',
         message: building
             ? 'Still learning your pattern — check back as more sessions '
-                'come in.'
+                  'come in.'
             : '${layer2['message']}',
         building: building,
       ),
@@ -97,8 +99,7 @@ DualCards? resultCardsFor(Map<String, dynamic>? result) {
   return null;
 }
 
-final latestResultProvider =
-    FutureProvider<Map<String, dynamic>?>((ref) async {
+final latestResultProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
   return ref.watch(sessionRepositoryProvider).watchLatestResult();
 });
 
@@ -121,9 +122,23 @@ class DashboardScreen extends ConsumerWidget {
     final checkIns = ref.watch(checkInProvider);
     final resultAsync = ref.watch(latestResultProvider);
     final sessions = sessionsAsync.valueOrNull ?? [];
-    final screeningSessions =
-        sessions.where((s) => !s.isFamiliarization).length;
+    final screeningSessions = sessions
+        .where((s) => !s.isFamiliarization)
+        .length;
     final cards = resultCardsFor(resultAsync.valueOrNull);
+    final streak = ref.watch(streakProvider);
+    final reminderHint = ref
+        .watch(reminderPrefsProvider.notifier)
+        .nextHint(
+          now: DateTime.now(),
+          typedToday: sessions.any(
+            (s) =>
+                !s.isFamiliarization &&
+                _isSameDay(s.startTime.toLocal(), DateTime.now()),
+          ),
+        );
+    final milestone = latestMilestoneHit(screeningSessions);
+    final next = nextMilestone(screeningSessions);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -135,6 +150,34 @@ class DashboardScreen extends ConsumerWidget {
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           Text('$screeningSessions screening sessions stored on this device'),
+          if (milestone != null)
+            Card(
+              color: AppColors.statusNormal.withValues(alpha: 0.12),
+              child: ListTile(
+                leading: const Icon(Icons.celebration_outlined),
+                title: Text(
+                  'Milestone: $milestone sessions — nice consistency!',
+                ),
+                subtitle: Text(
+                  next == null
+                      ? 'You are at the top tier. Keep your rhythm steady.'
+                      : '$screeningSessions/$next to the next milestone.',
+                ),
+              ),
+            ),
+          Card(
+            child: ListTile(
+              leading: Icon(
+                streak > 0
+                    ? Icons.local_fire_department_outlined
+                    : Icons.snooze_outlined,
+                color: streak > 0 ? AppColors.statusAttention : null,
+              ),
+              title: Text(streak > 0 ? '$streak-day streak' : 'No streak yet'),
+              subtitle: Text(reminderHint),
+              onTap: () => context.go('/profile/settings'),
+            ),
+          ),
           const SizedBox(height: 16),
           if (cards == null) ...[
             Card(
@@ -145,7 +188,7 @@ class DashboardScreen extends ConsumerWidget {
                   fam.screeningReady
                       ? 'Practice complete — comparison activates with analysis.'
                       : 'Complete ${fam.requiredSessions} practice session(s) first. '
-                          'Practice is never scored.',
+                            'Practice is never scored.',
                 ),
               ),
             ),
@@ -169,13 +212,14 @@ class DashboardScreen extends ConsumerWidget {
               _ResultCard(data: cards.layer2, big: false),
             ],
           ],
+          if (cards != null &&
+              (cards.layer1.status != 'normal' ||
+                  cards.layer2.status != 'normal'))
+            _ShapContributors(result: resultAsync.valueOrNull),
           const SizedBox(height: 8),
           Row(
             children: [
-              _StatChip(
-                label: 'Sessions',
-                value: '$screeningSessions',
-              ),
+              _StatChip(label: 'Sessions', value: '$screeningSessions'),
               const SizedBox(width: 8),
               _StatChip(
                 label: 'Practice',
@@ -183,10 +227,7 @@ class DashboardScreen extends ConsumerWidget {
                     '${fam.completedPracticeSessions}/${fam.requiredSessions}',
               ),
               const SizedBox(width: 8),
-              _StatChip(
-                label: 'Check-ins',
-                value: '${checkIns.length}',
-              ),
+              _StatChip(label: 'Check-ins', value: '${checkIns.length}'),
             ],
           ),
           const SizedBox(height: 16),
@@ -274,9 +315,7 @@ class _ResultCard extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Icon(
-          data.building
-              ? Icons.hourglass_empty_outlined
-              : Icons.circle,
+          data.building ? Icons.hourglass_empty_outlined : Icons.circle,
           color: data.color,
           size: big ? 32 : 24,
         ),
@@ -291,6 +330,62 @@ class _ResultCard extends StatelessWidget {
   }
 }
 
+class _ShapContributors extends StatelessWidget {
+  final Map<String, dynamic>? result;
+  const _ShapContributors({required this.result});
+  @override
+  Widget build(BuildContext context) {
+    final l1 = result?['layer1'];
+    final shapStatus = '${result?['shap_status'] ?? ''}';
+    final contributors = l1 is Map ? l1['top_contributors'] : null;
+    if (contributors is List && contributors.isNotEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'What stood out',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              for (final c in contributors.take(3))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '• ${c is Map ? (c['text'] ?? c['feature']) : '$c'}',
+                  ),
+                ),
+              Text(
+                'For context only — not a diagnosis.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (shapStatus == 'pending') {
+      return const Card(
+        child: ListTile(
+          leading: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          title: Text('Building explanation…'),
+          subtitle: Text('Your pattern is ready; details will appear shortly.'),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+bool _isSameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
 class _StatChip extends StatelessWidget {
   final String label;
   final String value;
@@ -304,8 +399,7 @@ class _StatChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
             children: [
-              Text(value,
-                  style: Theme.of(context).textTheme.headlineSmall),
+              Text(value, style: Theme.of(context).textTheme.headlineSmall),
               Text(label),
             ],
           ),
