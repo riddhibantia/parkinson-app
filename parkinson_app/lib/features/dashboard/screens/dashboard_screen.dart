@@ -200,6 +200,39 @@ class DashboardScreen extends ConsumerWidget {
               ),
             Text('Here\'s what you can do today.',
                 style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 8),
+            // Layer switcher — visible on Home per spec 19
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+              child: Row(
+                children: [
+                  Text('Current mode:', style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButton<AnalysisMode>(
+                      value: ref.watch(analysisModeProvider),
+                      hint: const Text('Choose mode'),
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      items: const [
+                        DropdownMenuItem(value: AnalysisMode.layer1, child: Text('Layer 1 · Quick Analysis')),
+                        DropdownMenuItem(value: AnalysisMode.layer2, child: Text('Layer 2 · Personal Monitoring')),
+                      ],
+                      onChanged: (m) async {
+                        if (m != null) {
+                          await ref.read(analysisModeProvider.notifier).setMode(m);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             // Primary CTA per mode
             if (ref.watch(analysisModeProvider) == AnalysisMode.layer1) ...[

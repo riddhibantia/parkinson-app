@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -174,12 +175,16 @@ class _StructuredTypingScreenState
 
     // Demo mode: local only, immediate heuristic, no Firestore
     if (isDemo) {
+      if (kDebugMode) debugPrint('[PARKINTRACE] SESSION CREATED sessionId=${session.sessionId}');
       final features = LocalFeatureExtractor.extract(session.events);
+      if (kDebugMode) debugPrint('[PARKINTRACE] FEATURES GENERATED ${features.length}');
       final heuristic = LocalFeatureExtractor.layer1Heuristic(features);
+      if (kDebugMode) debugPrint('[PARKINTRACE] LAYER2 ANALYSIS COMPLETE status=${heuristic['status']}');
       ref.read(lastLocalLayer1ResultProvider.notifier).state = heuristic;
       ref.read(lastLocalFeaturesProvider.notifier).state = features;
-      // Also buffer locally for history
+      if (kDebugMode) debugPrint('[PARKINTRACE] SESSION SAVING path=users/${session.userId}/sessions/${session.sessionId} demo=true');
       await ref.read(sessionRepositoryProvider).saveSession(session);
+      if (kDebugMode) debugPrint('[PARKINTRACE] SESSION SAVED sessionId=${session.sessionId}');
       ref.invalidate(localSessionsProvider);
       await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
@@ -187,33 +192,37 @@ class _StructuredTypingScreenState
         _analyzing = false;
         _saving = false;
       });
+      if (kDebugMode) debugPrint('[PARKINTRACE] NAVIGATING TO ${mode == AnalysisMode.layer1 ? '/insights/layer1' : '/session/layer2/${session.sessionId}'}');
       if (mode == AnalysisMode.layer1) {
-        context.go('/insights/layer1');
+        context.go('/insights/layer1', extra: session);
       } else {
-        context.go('/session/layer2/${session.sessionId}');
+        context.go('/session/layer2/${session.sessionId}', extra: session);
       }
       return;
     }
 
     // Real user: try Firestore write with user-friendly error handling
     try {
-      // Show Saving...
+      if (kDebugMode) debugPrint('[PARKINTRACE] SESSION SAVING path=users/$uid/sessions/${session.sessionId}');
       await ref.read(sessionRepositoryProvider).saveSession(session);
+      if (kDebugMode) debugPrint('[PARKINTRACE] SESSION SAVED sessionId=${session.sessionId}');
       ref.invalidate(localSessionsProvider);
       setState(() => _saving = false);
-      // Analyzing...
-      // Run local heuristic for immediate feedback while Cloud Function processes
+      if (kDebugMode) debugPrint('[PARKINTRACE] FEATURES GENERATED start');
       final features = LocalFeatureExtractor.extract(session.events);
+      if (kDebugMode) debugPrint('[PARKINTRACE] FEATURES GENERATED ${features.length}');
       final heuristic = LocalFeatureExtractor.layer1Heuristic(features);
+      if (kDebugMode) debugPrint('[PARKINTRACE] ANALYSIS COMPLETE status=${heuristic['status']}');
       ref.read(lastLocalLayer1ResultProvider.notifier).state = heuristic;
       ref.read(lastLocalFeaturesProvider.notifier).state = features;
       await Future.delayed(const Duration(milliseconds: 700));
       if (!mounted) return;
       setState(() => _analyzing = false);
+      if (kDebugMode) debugPrint('[PARKINTRACE] NAVIGATING TO ${mode == AnalysisMode.layer1 ? '/insights/layer1' : '/session/layer2/${session.sessionId}'}');
       if (mode == AnalysisMode.layer1) {
-        context.go('/insights/layer1');
+        context.go('/insights/layer1', extra: session);
       } else {
-        context.go('/session/layer2/${session.sessionId}');
+        context.go('/session/layer2/${session.sessionId}', extra: session);
       }
     } catch (e) {
       if (!mounted) return;

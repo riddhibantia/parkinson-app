@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/layout/top_bar.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../data/models/typing_session.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../../data/services/demo_data_service.dart';
 import '../../../core/providers/app_mode_provider.dart';
@@ -13,18 +16,34 @@ import '../../../shared/widgets/design_system.dart';
 
 class Layer2SessionInsightScreen extends ConsumerWidget {
   final String sessionId;
-  const Layer2SessionInsightScreen({super.key, required this.sessionId});
+  final TypingSession? initialSession;
+  const Layer2SessionInsightScreen({super.key, required this.sessionId, this.initialSession});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (kDebugMode) debugPrint('[PARKINTRACE] SESSION FETCH requested id=$sessionId');
     final sessionsAsync = ref.watch(localSessionsProvider);
     final sessions = sessionsAsync.valueOrNull ?? [];
     final isDemo = ref.watch(appModeProvider).isDemo;
     final effectiveSessions = (isDemo && sessions.isEmpty) ? DemoDataService.demoSessions() : sessions;
-    final session = effectiveSessions.where((s) => s.sessionId == sessionId).firstOrNull ??
-        effectiveSessions.firstOrNull;
+    TypingSession? session = initialSession ?? effectiveSessions.where((s) => s.sessionId == sessionId).firstOrNull;
+    session ??= effectiveSessions.firstOrNull;
+    if (kDebugMode) {
+      if (session != null) {
+        debugPrint('[PARKINTRACE] SESSION FOUND id=${session.sessionId}');
+      } else {
+        debugPrint('[PARKINTRACE] SESSION NOT FOUND requested=$sessionId');
+      }
+    }
     if (session == null) {
-      return Scaffold(appBar: const AppTopBar(title: "Today's session", subtitle: 'Personal monitoring'), body: const Center(child: Text('Session not found')));
+      return Scaffold(
+          appBar: const AppTopBar(title: "Today's session", subtitle: 'Personal monitoring'),
+          body: Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Session not found'),
+            const SizedBox(height: 8),
+            ElevatedButton(onPressed: () => context.go('/home'), child: const Text('Back to Home'))
+          ])));
     }
     final features = LocalFeatureExtractor.extract(session.events);
     final interp = _layer2Interpretation(features, effectiveSessions.length);

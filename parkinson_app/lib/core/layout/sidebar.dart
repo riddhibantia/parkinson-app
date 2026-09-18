@@ -14,7 +14,7 @@ class AppSidebar extends ConsumerWidget {
 
   static const _items = [
     (Icons.home_outlined, Icons.home, 'Home'),
-    (Icons.keyboard_outlined, Icons.keyboard, 'Typing'),
+    (Icons.keyboard_outlined, Icons.keyboard, 'Typing Session'),
     (Icons.insights_outlined, Icons.insights, 'Insights'),
     (Icons.person_outline, Icons.person, 'Profile'),
   ];
@@ -94,18 +94,57 @@ class AppSidebar extends ConsumerWidget {
           const SizedBox(height: 8),
           const Divider(height: 1),
           const SizedBox(height: 8),
-          // Nav
+          // Nav — fixed order Home, Typing Session, Insights, Profile
           for (var i = 0; i < _items.length; i++)
             _NavItem(
               icon: _items[i].$1,
               activeIcon: _items[i].$2,
               label: _items[i].$3,
               selected: navigationShell.currentIndex == i,
-              onTap: () => navigationShell.goBranch(
-                i,
-                initialLocation: i == navigationShell.currentIndex,
-              ),
+              onTap: () {
+                // Insights is mode-aware: go to correct layer's insights
+                if (i == 2) {
+                  final mode = ref.read(analysisModeProvider);
+                  if (mode == AnalysisMode.layer1) {
+                    context.go('/insights/layer1');
+                    return;
+                  } else if (mode == AnalysisMode.layer2) {
+                    context.go('/insights/layer2');
+                    return;
+                  }
+                }
+                navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);
+              },
             ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text('ANALYSIS MODES',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 0.6, color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6))),
+          ),
+          const SizedBox(height: 8),
+          _LayerModeButton(
+            icon: Icons.science_outlined,
+            label: 'Layer 1',
+            subtitle: 'Quick Analysis',
+            selected: analysisMode == AnalysisMode.layer1,
+            onTap: () async {
+              await ref.read(analysisModeProvider.notifier).setMode(AnalysisMode.layer1);
+              if (context.mounted) context.go('/home');
+            },
+          ),
+          const SizedBox(height: 6),
+          _LayerModeButton(
+            icon: Icons.timeline_outlined,
+            label: 'Layer 2',
+            subtitle: 'Personal Monitoring',
+            selected: analysisMode == AnalysisMode.layer2,
+            onTap: () async {
+              await ref.read(analysisModeProvider.notifier).setMode(AnalysisMode.layer2);
+              if (context.mounted) context.go('/home');
+            },
+          ),
           const Spacer(),
           const Divider(height: 1),
           Padding(
@@ -177,9 +216,7 @@ class _NavItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: Material(
-        color: selected
-            ? AppColors.primary.withValues(alpha: 0.12)
-            : Colors.transparent,
+        color: selected ? AppColors.primary.withValues(alpha: 0.12) : Colors.transparent,
         borderRadius: AppRadii.radiusMd,
         child: InkWell(
           onTap: onTap,
@@ -188,21 +225,47 @@ class _NavItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
-                Icon(
-                  selected ? activeIcon : icon,
-                  size: 20,
-                  color: selected ? AppColors.primary : null,
-                ),
+                Icon(selected ? activeIcon : icon, size: 20, color: selected ? AppColors.primary : null),
                 const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                    color: selected ? AppColors.primary : null,
-                  ),
-                ),
+                Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: selected ? FontWeight.w600 : FontWeight.w400, color: selected ? AppColors.primary : null)),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LayerModeButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+  const _LayerModeButton({required this.icon, required this.label, required this.subtitle, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: Material(
+        color: selected ? const Color(0xFF10B981).withValues(alpha: 0.14) : Colors.transparent,
+        borderRadius: AppRadii.radiusMd,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadii.radiusMd,
+          child: Container(
+            decoration: selected ? BoxDecoration(border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)), borderRadius: AppRadii.radiusMd) : null,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(children: [
+              Icon(icon, size: 18, color: selected ? const Color(0xFF10B981) : null),
+              const SizedBox(width: 10),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: selected ? const Color(0xFF10B981) : null, fontSize: 13)),
+                Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7))),
+              ]),
+            ]),
           ),
         ),
       ),

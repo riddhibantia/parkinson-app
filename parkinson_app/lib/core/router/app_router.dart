@@ -121,7 +121,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/session/layer2/:id',
-        builder: (context, state) => Layer2SessionInsightScreen(sessionId: state.pathParameters['id']!),
+        builder: (context, state) {
+          final extra = state.extra is TypingSession ? state.extra as TypingSession : null;
+          return Layer2SessionInsightScreen(sessionId: state.pathParameters['id']!, initialSession: extra);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
