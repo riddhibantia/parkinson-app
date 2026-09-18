@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/providers/analysis_mode_provider.dart';
 import '../../../core/providers/app_mode_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../../data/services/demo_data_service.dart';
+import '../../../shared/widgets/design_system.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/gradient_background.dart';
@@ -179,11 +181,71 @@ class DashboardScreen extends ConsumerWidget {
               '${_greeting()}!',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            Text(
-                isDemo
-                    ? '$effectiveScreeningCount screening sessions — Sample / Demo Data'
-                    : '$screeningSessions screening sessions stored on this device'),
-            BaselineProgress(screeningSessions: effectiveScreeningCount),
+            if (ref.watch(analysisModeProvider) != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    ref.watch(analysisModeProvider) == AnalysisMode.layer1
+                        ? 'LAYER 1 · Quick Analysis'
+                        : 'LAYER 2 · Personal Monitoring',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+                  ),
+                ),
+              ),
+            Text('Here\'s what you can do today.',
+                style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            // Primary CTA per mode
+            if (ref.watch(analysisModeProvider) == AnalysisMode.layer1) ...[
+              PrimaryButton(
+                label: effectiveScreeningCount >= 2 ? 'View results' : 'Start typing session',
+                icon: Icons.keyboard_outlined,
+                onPressed: () => context.go(effectiveScreeningCount >= 2 ? '/insights/layer1' : '/type/structured'),
+              ),
+              const SizedBox(height: 12),
+              ProgressCard(
+                title: 'Quick Analysis',
+                progressText: '$effectiveScreeningCount / 2 sessions',
+                fraction: (effectiveScreeningCount / 2).clamp(0, 1),
+                caption: effectiveScreeningCount >= 2
+                    ? 'Analysis ready — view your population comparison.'
+                    : effectiveScreeningCount == 1
+                        ? '1 of 2 sessions complete.'
+                        : 'Complete 1–2 sessions to see your research comparison.',
+              ),
+            ] else if (ref.watch(analysisModeProvider) == AnalysisMode.layer2) ...[
+              PrimaryButton(
+                label: effectiveScreeningCount >= AppConstants.minimumSessionsForBaseline
+                    ? 'Start today\'s session'
+                    : 'Continue monitoring',
+                icon: Icons.keyboard_outlined,
+                onPressed: () => context.go('/type/structured'),
+              ),
+              const SizedBox(height: 8),
+              SecondaryButton(label: "Today's check-in", onPressed: () => context.go('/checkin')),
+              const SizedBox(height: 12),
+              BaselineProgress(screeningSessions: effectiveScreeningCount),
+              ProgressCard(
+                title: 'Days collected',
+                progressText: '${(effectiveScreeningCount / 2).ceil().clamp(0, 5)} / 5 days',
+                fraction: ((effectiveScreeningCount / 2).ceil() / 5).clamp(0, 1),
+                caption: effectiveScreeningCount >= AppConstants.minimumSessionsForBaseline
+                    ? 'Personal monitoring active'
+                    : 'Building your personal baseline',
+              ),
+            ] else ...[
+              Text(
+                  isDemo
+                      ? '$effectiveScreeningCount screening sessions — Sample / Demo Data'
+                      : '$screeningSessions screening sessions stored on this device'),
+              BaselineProgress(screeningSessions: effectiveScreeningCount),
+            ],
             if (latestMilestoneHit(effectiveScreeningCount) != null)
               GlassCard(
                 tint: AppColors.statusNormal,
@@ -251,39 +313,65 @@ class DashboardScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.statusWatch, fontWeight: FontWeight.w600)),
               ),
-            LayerResultCard(
-              title: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer2.title
-                  : displayCards.layer1.title,
-              status: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer2.status
-                  : displayCards.layer1.status,
-              message: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer2.message
-                  : displayCards.layer1.message,
-              building: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer2.building
-                  : displayCards.layer1.building,
-              emphasized: true,
-            ),
-            LayerResultCard(
-              title: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer1.title
-                  : displayCards.layer2.title,
-              status: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer1.status
-                  : displayCards.layer2.status,
-              message: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer1.message
-                  : displayCards.layer2.message,
-            ),
-            RecommendationBanner(
-              status: displayCards.primaryFocus == 'layer2'
-                  ? displayCards.layer2.status
-                  : displayCards.layer1.status,
-            ),
+            // Mode-aware layer cards: show only relevant layer per chosen mode
+            if (ref.watch(analysisModeProvider) == AnalysisMode.layer1) ...[
+              LayerResultCard(
+                title: 'Population comparison',
+                status: displayCards.layer1.status,
+                message: displayCards.layer1.message,
+                emphasized: true,
+              ),
+              RecommendationBanner(status: displayCards.layer1.status),
+              _ShapContributors(result: effectiveResult),
+            ] else if (ref.watch(analysisModeProvider) == AnalysisMode.layer2) ...[
+              LayerResultCard(
+                title: 'Personal change monitoring',
+                status: displayCards.layer2.status,
+                message: displayCards.layer2.building
+                    ? 'Your personal baseline is being built from repeated sessions.'
+                    : displayCards.layer2.message,
+                building: displayCards.layer2.building,
+                emphasized: true,
+              ),
+              RecommendationBanner(status: displayCards.layer2.status),
+            ] else ...[
+              LayerResultCard(
+                title: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer2.title
+                    : displayCards.layer1.title,
+                status: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer2.status
+                    : displayCards.layer1.status,
+                message: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer2.message
+                    : displayCards.layer1.message,
+                building: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer2.building
+                    : displayCards.layer1.building,
+                emphasized: true,
+              ),
+              LayerResultCard(
+                title: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer1.title
+                    : displayCards.layer2.title,
+                status: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer1.status
+                    : displayCards.layer2.status,
+                message: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer1.message
+                    : displayCards.layer2.message,
+              ),
+              RecommendationBanner(
+                status: displayCards.primaryFocus == 'layer2'
+                    ? displayCards.layer2.status
+                    : displayCards.layer1.status,
+              ),
+              if (displayCards.layer1.status != 'normal' || displayCards.layer2.status != 'normal')
+                _ShapContributors(result: effectiveResult),
+            ],
           ],
-          if (displayCards != null &&
+          if (ref.watch(analysisModeProvider) == null &&
+              displayCards != null &&
               (displayCards.layer1.status != 'normal' ||
                   displayCards.layer2.status != 'normal'))
             _ShapContributors(result: effectiveResult),

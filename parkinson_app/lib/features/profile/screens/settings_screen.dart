@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/analysis_mode_provider.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../checkin/providers/checkin_provider.dart';
@@ -102,6 +103,27 @@ class SettingsScreen extends ConsumerWidget {
               onChanged: (m) {
                 if (m != null) ref.read(themeModeProvider.notifier).setMode(m);
               },
+            ),
+          ),
+          Card(
+            child: ListTile(
+              title: const Text('Analysis mode'),
+              subtitle: Text(ref.watch(analysisModeProvider) == null
+                  ? 'Not chosen yet'
+                  : ref.watch(analysisModeProvider) == AnalysisMode.layer1
+                      ? 'Current: Layer 1 — Quick Analysis'
+                      : 'Current: Layer 2 — Personal Monitoring'),
+              trailing: TextButton(
+                onPressed: () async {
+                  final current = ref.read(analysisModeProvider);
+                  final next = current == AnalysisMode.layer1 ? AnalysisMode.layer2 : AnalysisMode.layer1;
+                  await ref.read(analysisModeProvider.notifier).setMode(next);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Switched to ${next.label}')));
+                  }
+                },
+                child: Text(ref.watch(analysisModeProvider) == AnalysisMode.layer1 ? 'Switch to Layer 2' : 'Switch to Layer 1'),
+              ),
             ),
           ),
           const Card(

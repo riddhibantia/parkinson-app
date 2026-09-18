@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
+import '../../core/providers/analysis_mode_provider.dart';
 import '../../core/providers/app_mode_provider.dart';
 
 class AppSidebar extends ConsumerWidget {
@@ -20,6 +21,7 @@ class AppSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDemo = ref.watch(appModeProvider).isDemo;
+    final analysisMode = ref.watch(analysisModeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 260,
@@ -73,6 +75,26 @@ class AppSidebar extends ConsumerWidget {
               ],
             ),
           ),
+          if (analysisMode != null)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: AppRadii.radiusMd,
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                analysisMode == AnalysisMode.layer1 ? 'LAYER 1 · Quick Analysis' : 'LAYER 2 · Personal Monitoring',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          const SizedBox(height: 8),
           if (isDemo)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 12),

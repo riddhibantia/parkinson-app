@@ -1,22 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/layout/top_bar.dart';
+import '../../../core/providers/analysis_mode_provider.dart';
 import '../../../shared/widgets/design_system.dart';
 import '../../../shared/widgets/gradient_background.dart';
 import '../../../shared/widgets/glass_card.dart';
 
-/// Typing hub — three large cards, plain language, one primary CTA.
-class TypingScreen extends StatelessWidget {
+/// Typing hub — mode-aware per spec (Layer 1 vs Layer 2 recommended + Why).
+class TypingScreen extends ConsumerWidget {
   const TypingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mode = ref.watch(analysisModeProvider);
+    final title = mode == AnalysisMode.layer1
+        ? 'Quick Analysis'
+        : mode == AnalysisMode.layer2
+            ? 'Personal Monitoring'
+            : 'Typing';
+    final subtitle = mode == AnalysisMode.layer1
+        ? 'Layer 1 · 1–2 sessions, population comparison'
+        : mode == AnalysisMode.layer2
+            ? 'Layer 2 · Build baseline, track over time'
+            : 'Choose a short activity.';
     return Scaffold(
-      appBar: const AppTopBar(
-        title: 'Typing',
-        subtitle: 'Choose a short activity.',
-      ),
+      appBar: AppTopBar(title: title, subtitle: subtitle),
       body: GradientBackground(
         child: Center(
           child: ConstrainedBox(

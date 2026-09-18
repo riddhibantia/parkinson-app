@@ -7,11 +7,14 @@ import '../../features/auth/screens/signup_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/dashboard/screens/detailed_metrics_screen.dart';
 import '../../features/dashboard/screens/history_screen.dart';
+import '../../features/dashboard/screens/layer1_result_screen.dart';
+import '../../features/dashboard/screens/layer2_result_screen.dart';
 import '../../features/checkin/screens/checkin_screen.dart';
 import '../../features/onboarding/screens/consent_screen.dart';
 import '../../features/onboarding/screens/context_profile_screen.dart';
 import '../../features/onboarding/screens/demographics_screen.dart';
 import '../../features/onboarding/screens/how_it_works_screen.dart';
+import '../../features/onboarding/screens/layer_selection_screen.dart';
 import '../../features/onboarding/screens/typing_experience_screen.dart';
 import '../../features/onboarding/screens/welcome_screen.dart';
 import '../../features/info/screens/about_screen.dart';
@@ -88,6 +91,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'context-profile',
             builder: (context, state) => const ContextProfileScreen(),
           ),
+          GoRoute(
+            path: 'layer-selection',
+            builder: (context, state) => const LayerSelectionScreen(),
+          ),
         ],
       ),
       GoRoute(
@@ -158,6 +165,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'history',
                     builder: (context, state) => const HistoryScreen(),
+                  ),
+                  GoRoute(
+                    path: 'layer1',
+                    builder: (context, state) => const Layer1ResultScreen(),
+                  ),
+                  GoRoute(
+                    path: 'layer2',
+                    builder: (context, state) => const Layer2ResultScreen(),
                   ),
                 ],
               ),

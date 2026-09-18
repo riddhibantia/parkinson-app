@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/models/user_profile.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../../profile/providers/profile_context_provider.dart';
 
 /// Monitoring context profile (Stage 1.8). Personalizes the experience;
@@ -39,8 +38,8 @@ class _ContextProfileScreenState extends ConsumerState<ContextProfileScreen> {
         moreAffectedSide: _side,
       ));
     }
-    ref.read(hasOnboardedProvider.notifier).state = true;
-    context.go('/home');
+    // Do not finish onboarding here — go to layer selection next (new UX order)
+    context.go('/onboarding/layer-selection');
   }
 
   @override
