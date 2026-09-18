@@ -46,12 +46,15 @@ class ReminderPrefsNotifier extends StateNotifier<ReminderPrefs> {
 
   /// Human-readable next-nudge hint for the dashboard.
   String nextHint({required DateTime now, required bool typedToday}) {
-    if (!state.enabled)
+    if (!state.enabled) {
       return 'Reminders off — enable in Settings to stay consistent.';
-    if (typedToday)
+    }
+    if (typedToday) {
       return 'Nice — you typed today. See you tomorrow around ${state.hour}:00.';
-    if (now.hour >= state.hour)
+    }
+    if (now.hour >= state.hour) {
       return 'Gentle nudge: time for your daily typing check-in.';
+    }
     return 'Reminder set for today around ${state.hour}:00.';
   }
 }
