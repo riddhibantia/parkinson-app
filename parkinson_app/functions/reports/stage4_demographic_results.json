@@ -1,0 +1,435 @@
+{
+  "experiment": "demographic_secondary",
+  "scope": "Sensitivity analysis ONLY. Complete-case Tappy rows; 40 Tappy subjects (33 PD) missing birth year are excluded, so missingness is not random. Must not replace the primary typing-only model.",
+  "subset": {
+    "n_rows": 445,
+    "n_subjects": 176,
+    "label_rate": 0.7573033707865169,
+    "sex_terms": [
+      "Female",
+      "Male"
+    ],
+    "age_range": [
+      30.0,
+      90.0
+    ]
+  },
+  "rf_params": {
+    "n_estimators": 200,
+    "max_depth": 8,
+    "class_weight": "balanced",
+    "random_state": 42
+  },
+  "tabpfn_params": {
+    "device": "cpu"
+  },
+  "versions": {
+    "python": "3.10.11",
+    "scikit-learn": "1.6.1",
+    "numpy": "2.2.6",
+    "pandas": "2.3.3",
+    "scipy": "1.15.3",
+    "torch": "2.14.0+cpu",
+    "cuda_available": false,
+    "tabpfn": "2.2.1"
+  },
+  "arms": {
+    "rf_typing_only": {
+      "arm": "rf_typing_only",
+      "features": [
+        "ht_mean",
+        "ht_std",
+        "ft_mean",
+        "ft_std",
+        "ikl_mean",
+        "ikl_std",
+        "left_ht_mean",
+        "right_ht_mean",
+        "hand_asymmetry",
+        "pause_frequency",
+        "typing_speed",
+        "session_consistency"
+      ],
+      "mean": {
+        "roc_auc": {
+          "mean": 0.5724598227859097,
+          "std": 0.06049617992587596
+        },
+        "avg_precision": {
+          "mean": 0.8240116726607795,
+          "std": 0.08084255470908687
+        },
+        "f1": {
+          "mean": 0.7787513993095718,
+          "std": 0.07008858531982746
+        }
+      },
+      "folds": [
+        {
+          "roc_auc": 0.47826086956521735,
+          "avg_precision": 0.8188429842102228,
+          "f1": 0.8029197080291971,
+          "confusion": {
+            "tn": 4,
+            "fp": 13,
+            "fn": 14,
+            "tp": 55
+          },
+          "n_pos": 69,
+          "n_neg": 17
+        },
+        {
+          "roc_auc": 0.6324675324675325,
+          "avg_precision": 0.6969403077496912,
+          "f1": 0.6896551724137931,
+          "confusion": {
+            "tn": 2,
+            "fp": 40,
+            "fn": 5,
+            "tp": 50
+          },
+          "n_pos": 55,
+          "n_neg": 42
+        },
+        {
+          "roc_auc": 0.5317307692307692,
+          "avg_precision": 0.8295703651912665,
+          "f1": 0.7166666666666667,
+          "confusion": {
+            "tn": 4,
+            "fp": 12,
+            "fn": 22,
+            "tp": 43
+          },
+          "n_pos": 65,
+          "n_neg": 16
+        },
+        {
+          "roc_auc": 0.5838509316770186,
+          "avg_precision": 0.9523475970759279,
+          "f1": 0.8876404494382022,
+          "confusion": {
+            "tn": 0,
+            "fp": 7,
+            "fn": 13,
+            "tp": 79
+          },
+          "n_pos": 92,
+          "n_neg": 7
+        },
+        {
+          "roc_auc": 0.6359890109890111,
+          "avg_precision": 0.8223571090767892,
+          "f1": 0.796875,
+          "confusion": {
+            "tn": 5,
+            "fp": 21,
+            "fn": 5,
+            "tp": 51
+          },
+          "n_pos": 56,
+          "n_neg": 26
+        }
+      ]
+    },
+    "rf_with_demo": {
+      "arm": "rf_with_demo",
+      "features": [
+        "ht_mean",
+        "ht_std",
+        "ft_mean",
+        "ft_std",
+        "ikl_mean",
+        "ikl_std",
+        "left_ht_mean",
+        "right_ht_mean",
+        "hand_asymmetry",
+        "pause_frequency",
+        "typing_speed",
+        "session_consistency",
+        "age_years",
+        "sex_male"
+      ],
+      "mean": {
+        "roc_auc": {
+          "mean": 0.5445747836988246,
+          "std": 0.05529309635184223
+        },
+        "avg_precision": {
+          "mean": 0.808208851691972,
+          "std": 0.08248716963096192
+        },
+        "f1": {
+          "mean": 0.8154881223564349,
+          "std": 0.07955118213670948
+        }
+      },
+      "folds": [
+        {
+          "roc_auc": 0.45694799658994034,
+          "avg_precision": 0.8001174706373043,
+          "f1": 0.7941176470588235,
+          "confusion": {
+            "tn": 4,
+            "fp": 13,
+            "fn": 15,
+            "tp": 54
+          },
+          "n_pos": 69,
+          "n_neg": 17
+        },
+        {
+          "roc_auc": 0.5818181818181818,
+          "avg_precision": 0.6800516824418343,
+          "f1": 0.6896551724137931,
+          "confusion": {
+            "tn": 2,
+            "fp": 40,
+            "fn": 5,
+            "tp": 50
+          },
+          "n_pos": 55,
+          "n_neg": 42
+        },
+        {
+          "roc_auc": 0.5932692307692309,
+          "avg_precision": 0.8401060285392279,
+          "f1": 0.8461538461538461,
+          "confusion": {
+            "tn": 6,
+            "fp": 10,
+            "fn": 10,
+            "tp": 55
+          },
+          "n_pos": 65,
+          "n_neg": 16
+        },
+        {
+          "roc_auc": 0.501552795031056,
+          "avg_precision": 0.9347784253638,
+          "f1": 0.9354838709677419,
+          "confusion": {
+            "tn": 0,
+            "fp": 7,
+            "fn": 5,
+            "tp": 87
+          },
+          "n_pos": 92,
+          "n_neg": 7
+        },
+        {
+          "roc_auc": 0.5892857142857143,
+          "avg_precision": 0.7859906514776935,
+          "f1": 0.8120300751879699,
+          "confusion": {
+            "tn": 3,
+            "fp": 23,
+            "fn": 2,
+            "tp": 54
+          },
+          "n_pos": 56,
+          "n_neg": 26
+        }
+      ]
+    },
+    "tabpfn_typing_only": {
+      "arm": "tabpfn_typing_only",
+      "features": [
+        "ht_mean",
+        "ht_std",
+        "ft_mean",
+        "ft_std",
+        "ikl_mean",
+        "ikl_std",
+        "left_ht_mean",
+        "right_ht_mean",
+        "hand_asymmetry",
+        "pause_frequency",
+        "typing_speed",
+        "session_consistency"
+      ],
+      "mean": {
+        "roc_auc": {
+          "mean": 0.5788560884980323,
+          "std": 0.057750092703089076
+        },
+        "avg_precision": {
+          "mean": 0.8213312819939664,
+          "std": 0.07906761569871187
+        },
+        "f1": {
+          "mean": 0.7928497494608274,
+          "std": 0.07947445130491158
+        }
+      },
+      "folds": [
+        {
+          "roc_auc": 0.47314578005115093,
+          "avg_precision": 0.8247749788809037,
+          "f1": 0.7703703703703704,
+          "confusion": {
+            "tn": 3,
+            "fp": 14,
+            "fn": 17,
+            "tp": 52
+          },
+          "n_pos": 69,
+          "n_neg": 17
+        },
+        {
+          "roc_auc": 0.6346320346320345,
+          "avg_precision": 0.6946419033713818,
+          "f1": 0.7123287671232876,
+          "confusion": {
+            "tn": 3,
+            "fp": 39,
+            "fn": 3,
+            "tp": 52
+          },
+          "n_pos": 55,
+          "n_neg": 42
+        },
+        {
+          "roc_auc": 0.5740384615384615,
+          "avg_precision": 0.8334085175505148,
+          "f1": 0.7666666666666667,
+          "confusion": {
+            "tn": 7,
+            "fp": 9,
+            "fn": 19,
+            "tp": 46
+          },
+          "n_pos": 65,
+          "n_neg": 16
+        },
+        {
+          "roc_auc": 0.5854037267080745,
+          "avg_precision": 0.9435162191402896,
+          "f1": 0.9456521739130435,
+          "confusion": {
+            "tn": 2,
+            "fp": 5,
+            "fn": 5,
+            "tp": 87
+          },
+          "n_pos": 92,
+          "n_neg": 7
+        },
+        {
+          "roc_auc": 0.6270604395604396,
+          "avg_precision": 0.8103147910267425,
+          "f1": 0.7692307692307693,
+          "confusion": {
+            "tn": 2,
+            "fp": 24,
+            "fn": 6,
+            "tp": 50
+          },
+          "n_pos": 56,
+          "n_neg": 26
+        }
+      ]
+    },
+    "tabpfn_with_demo": {
+      "arm": "tabpfn_with_demo",
+      "features": [
+        "ht_mean",
+        "ht_std",
+        "ft_mean",
+        "ft_std",
+        "ikl_mean",
+        "ikl_std",
+        "left_ht_mean",
+        "right_ht_mean",
+        "hand_asymmetry",
+        "pause_frequency",
+        "typing_speed",
+        "session_consistency",
+        "age_years",
+        "sex_male"
+      ],
+      "mean": {
+        "roc_auc": {
+          "mean": 0.5557044894576864,
+          "std": 0.05144582560607502
+        },
+        "avg_precision": {
+          "mean": 0.7905682087840591,
+          "std": 0.11435956691812425
+        },
+        "f1": {
+          "mean": 0.7853503359385712,
+          "std": 0.04631414268449817
+        }
+      },
+      "folds": [
+        {
+          "roc_auc": 0.4961636828644501,
+          "avg_precision": 0.7900408088590595,
+          "f1": 0.7941176470588235,
+          "confusion": {
+            "tn": 4,
+            "fp": 13,
+            "fn": 15,
+            "tp": 54
+          },
+          "n_pos": 69,
+          "n_neg": 17
+        },
+        {
+          "roc_auc": 0.49567099567099565,
+          "avg_precision": 0.5982087417421139,
+          "f1": 0.6993006993006993,
+          "confusion": {
+            "tn": 4,
+            "fp": 38,
+            "fn": 5,
+            "tp": 50
+          },
+          "n_pos": 55,
+          "n_neg": 42
+        },
+        {
+          "roc_auc": 0.6038461538461538,
+          "avg_precision": 0.821501609080507,
+          "f1": 0.816,
+          "confusion": {
+            "tn": 7,
+            "fp": 9,
+            "fn": 14,
+            "tp": 51
+          },
+          "n_pos": 65,
+          "n_neg": 16
+        },
+        {
+          "roc_auc": 0.5667701863354038,
+          "avg_precision": 0.9561521879082069,
+          "f1": 0.8333333333333334,
+          "confusion": {
+            "tn": 1,
+            "fp": 6,
+            "fn": 22,
+            "tp": 70
+          },
+          "n_pos": 92,
+          "n_neg": 7
+        },
+        {
+          "roc_auc": 0.6160714285714286,
+          "avg_precision": 0.7869376963304088,
+          "f1": 0.784,
+          "confusion": {
+            "tn": 6,
+            "fp": 20,
+            "fn": 7,
+            "tp": 49
+          },
+          "n_pos": 56,
+          "n_neg": 26
+        }
+      ]
+    }
+  },
+  "runtime_sec": 109.6
+}

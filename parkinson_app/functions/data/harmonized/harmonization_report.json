@@ -1,0 +1,73 @@
+{
+  "tappy": {
+    "subjects_total": 227,
+    "subjects_labeled": 227,
+    "label_counts": {
+      "1": 169,
+      "0": 58
+    },
+    "subjects_with_files": 212,
+    "subjects_dropped_no_label": 0,
+    "month_files_seen": 559,
+    "month_files_skipped_too_small": 7,
+    "rows": 552
+  },
+  "neuroqwerty": {
+    "subjects": 85,
+    "label_counts": {
+      "1": 42,
+      "0": 43
+    },
+    "files": 116,
+    "subjects_dropped_no_label": 0,
+    "rows": 116
+  },
+  "pooled_rows": 668,
+  "pooled_subjects": 297,
+  "column_missingness": {
+    "subject_id": 0,
+    "dataset_source": 0,
+    "parkinsons_label": 0,
+    "age_at_session": 223,
+    "sex_gender": 116,
+    "demographics_available": 0,
+    "ht_mean": 0,
+    "ht_std": 0,
+    "ft_mean": 0,
+    "ft_std": 0,
+    "ikl_mean": 0,
+    "ikl_std": 0,
+    "left_ht_mean": 0,
+    "right_ht_mean": 0,
+    "hand_asymmetry": 0,
+    "pause_frequency": 0,
+    "typing_speed": 0,
+    "session_consistency": 0,
+    "backspace_rate": 552,
+    "n_keystrokes": 0,
+    "source_file": 0
+  },
+  "schema_columns": [
+    "subject_id",
+    "dataset_source",
+    "parkinsons_label",
+    "age_at_session",
+    "sex_gender",
+    "demographics_available",
+    "ht_mean",
+    "ht_std",
+    "ft_mean",
+    "ft_std",
+    "ikl_mean",
+    "ikl_std",
+    "left_ht_mean",
+    "right_ht_mean",
+    "hand_asymmetry",
+    "pause_frequency",
+    "typing_speed",
+    "session_consistency",
+    "backspace_rate",
+    "n_keystrokes",
+    "source_file"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "584850925629",
+    "project_id": "parkinson-app-rbt",
+    "storage_bucket": "parkinson-app-rbt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:584850925629:android:3fde9ecb5d2944b603a254",
+        "android_client_info": {
+          "package_name": "com.example.parkinson_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "584850925629-gkjrsuqipiv0gug0cptaunf544m0c2og.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpRCiDPxdujN1gBrCarnsKNvfRM7z0gsw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "584850925629-gkjrsuqipiv0gug0cptaunf544m0c2og.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

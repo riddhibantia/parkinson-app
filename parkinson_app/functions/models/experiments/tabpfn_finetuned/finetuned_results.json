@@ -1,0 +1,116 @@
+{
+  "experiment": "tabpfn_finetuned",
+  "model": "FinetunedTabPFNClassifier",
+  "model_version": "v2",
+  "device": "cuda",
+  "epochs": 30,
+  "learning_rate": 1e-05,
+  "seed": 42,
+  "features": [
+    "ht_mean",
+    "ht_std",
+    "ft_mean",
+    "ft_std",
+    "ikl_mean",
+    "ikl_std",
+    "left_ht_mean",
+    "right_ht_mean",
+    "hand_asymmetry",
+    "pause_frequency",
+    "typing_speed",
+    "session_consistency"
+  ],
+  "versions": {
+    "python": "3.13.15",
+    "scikit-learn": "1.6.1",
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "scipy": "1.16.3",
+    "torch": "2.11.0+cu128",
+    "cuda_available": true,
+    "tabpfn": "9.0.0"
+  },
+  "gpu": "Tesla T4",
+  "folds": [
+    {
+      "roc_auc": 0.46539721539721546,
+      "avg_precision": 0.743863700928307,
+      "f1": 0.647887323943662,
+      "confusion": {
+        "tn": 11,
+        "fp": 33,
+        "fn": 42,
+        "tp": 69
+      },
+      "n_pos": 111,
+      "n_neg": 44
+    },
+    {
+      "roc_auc": 0.581133042809536,
+      "avg_precision": 0.6725101117738912,
+      "f1": 0.7731958762886598,
+      "confusion": {
+        "tn": 11,
+        "fp": 36,
+        "fn": 8,
+        "tp": 75
+      },
+      "n_pos": 83,
+      "n_neg": 47
+    },
+    {
+      "roc_auc": 0.5445068163592622,
+      "avg_precision": 0.7483229478106093,
+      "f1": 0.7731958762886598,
+      "confusion": {
+        "tn": 11,
+        "fp": 32,
+        "fn": 12,
+        "tp": 75
+      },
+      "n_pos": 87,
+      "n_neg": 43
+    },
+    {
+      "roc_auc": 0.5815315315315315,
+      "avg_precision": 0.8125505934233912,
+      "f1": 0.933920704845815,
+      "confusion": {
+        "tn": 10,
+        "fp": 10,
+        "fn": 5,
+        "tp": 106
+      },
+      "n_pos": 111,
+      "n_neg": 20
+    },
+    {
+      "roc_auc": 0.5836805555555555,
+      "avg_precision": 0.7960031757783534,
+      "f1": 0.83,
+      "confusion": {
+        "tn": 5,
+        "fp": 27,
+        "fn": 7,
+        "tp": 83
+      },
+      "n_pos": 90,
+      "n_neg": 32
+    }
+  ],
+  "errors": [],
+  "mean": {
+    "roc_auc": {
+      "mean": 0.5512498323306202,
+      "std": 0.04533845935322006
+    },
+    "avg_precision": {
+      "mean": 0.7546501059429105,
+      "std": 0.048920140924876857
+    },
+    "f1": {
+      "mean": 0.7916399562733594,
+      "std": 0.09280139206254319
+    }
+  }
+}

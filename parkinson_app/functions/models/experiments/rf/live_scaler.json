@@ -1,0 +1,47 @@
+{
+ "features": [
+  "ht_mean",
+  "ht_std",
+  "ft_mean",
+  "ft_std",
+  "ikl_mean",
+  "ikl_std",
+  "left_ht_mean",
+  "right_ht_mean",
+  "hand_asymmetry",
+  "pause_frequency",
+  "typing_speed",
+  "session_consistency"
+ ],
+ "mean_": [
+  118.46730707081811,
+  65.13261956693577,
+  242.37125254954168,
+  136.4265893112967,
+  337.23467358559213,
+  136.32018106449328,
+  122.65556085316962,
+  113.70223136321972,
+  0.1094612995553062,
+  9.207081037222153,
+  3.153467888636975,
+  0.4142172078378844
+ ],
+ "scale_": [
+  32.78021619482668,
+  317.2516828982908,
+  125.04396660079364,
+  72.86873936063407,
+  145.93257797919358,
+  73.74565670526393,
+  35.223581761421364,
+  32.9789643402637,
+  0.10333238580773665,
+  11.485488367901715,
+  1.2320260131143141,
+  0.11319698248809607
+ ],
+ "derived_from": "harmonized_sessions.csv pooled VALID rows only: 4 Tappy month-rows with physically-impossible negative mean hold times (corrupt device clocks) are excluded from inference normalization. Training rows/folds/models are untouched (Stage 4 frozen); RF is scale-invariant so its results are unaffected; TabPFN-family numbers carry this disclosed caveat.",
+ "n_rows": 664,
+ "n_excluded_corrupt": 4
+}
