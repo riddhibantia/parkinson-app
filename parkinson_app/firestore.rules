@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Security rules (Stage 1.5/6.5): every userId in the schema comes from
+// Firebase Auth, and these rules are what actually enforce that a signed-in
+// user can only ever read or write their own data. Auth without rules is
+// just a login screen.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Per-user tree: profile, sessions, baselines, results — owner only.
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /baselines/{baselineId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /results/{resultId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Reference stats + model metadata: readable by any signed-in user
+    // (dashboard context), writable only by admins (server-side).
+    match /reference/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

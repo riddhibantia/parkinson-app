@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Per-user Isolation Forest artifacts (Stage 5.3/6.4):
+// anomaly_models/{userId}/isolation_forest.joblib — owner only.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /anomaly_models/{userId}/{artifact} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+  }
+}
