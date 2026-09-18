@@ -21,7 +21,9 @@ import '../../features/info/screens/faq_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/settings_screen.dart';
 import '../../features/free_typing/screens/free_typing_screen.dart';
+import '../../data/models/typing_session.dart';
 import '../../features/typing_test/screens/motor_task_screen.dart';
+import '../../features/typing_test/screens/session_complete_screen.dart';
 import '../../features/typing_test/screens/structured_typing_screen.dart';
 import '../../features/typing_test/screens/typing_screen.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
@@ -133,6 +135,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'motor-task',
                     builder: (context, state) => const MotorTaskScreen(),
+                  ),
+                  GoRoute(
+                    path: 'complete',
+                    builder: (context, state) {
+                      final s = state.extra as TypingSession;
+                      return SessionCompleteScreen(session: s);
+                    },
                   ),
                 ],
               ),
