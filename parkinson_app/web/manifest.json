@@ -1,11 +1,11 @@
 {
-    "name": "parkinson_app",
-    "short_name": "parkinson_app",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+     "name": "TypeMonitor",
+     "short_name": "TypeMonitor",
+     "start_url": ".",
+     "display": "standalone",
+     "background_color": "#0F172A",
+     "theme_color": "#0F766E",
+     "description": "TypeMonitor — Typing patterns. Personal monitoring.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

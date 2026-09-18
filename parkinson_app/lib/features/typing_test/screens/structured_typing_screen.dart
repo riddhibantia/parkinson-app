@@ -143,8 +143,10 @@ class _StructuredTypingScreenState
       return;
     }
     final isDemo = ref.read(appModeProvider).isDemo;
-    final isPractice = !ref.read(familiarizationProvider).screeningReady;
     final mode = ref.read(analysisModeProvider);
+    final isPractice = mode == AnalysisMode.layer1
+        ? false
+        : !ref.read(familiarizationProvider).screeningReady;
     // Idempotent session ID — reuse pending on retry
     final sessionId =
         _pendingSession?.sessionId ??

@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class SplashScreen extends StatefulWidget {
+import '../../auth/providers/auth_provider.dart';
+
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) context.go('/onboarding');
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      final signedIn = ref.read(isSignedInProvider);
+      final onboarded = ref.read(hasOnboardedProvider);
+      if (!signedIn) {
+        context.go('/login');
+      } else if (!onboarded) {
+        context.go('/onboarding');
+      } else {
+        context.go('/home');
+      }
     });
   }
 
@@ -25,11 +37,20 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(16),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.keyboard_alt_outlined,
@@ -42,10 +63,10 @@ class _SplashScreenState extends State<SplashScreen> {
               'TypeMonitor',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
-              'Understand your typing patterns over time.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              'Typing patterns. Personal monitoring.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),
               textAlign: TextAlign.center,
