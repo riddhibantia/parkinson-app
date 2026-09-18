@@ -52,15 +52,15 @@ class _StructuredTypingScreenState
   }
 
   static const _layer1Passages = [
-    'Regular typing allows us to observe timing differences between successive key presses while keeping the task simple and natural. Type the passage at your normal comfortable pace without deliberately changing your speed. Focus on accuracy and let the rhythm emerge naturally as you type.',
-    'The morning light filled the quiet room as she prepared a simple breakfast of toast and tea. Outside, the street was calm and the air felt fresh after the night rain. Small daily routines like this can reveal consistent patterns in how we move and interact with familiar tools.',
-    'A short walk through the park offers a chance to notice steady breathing and relaxed movement. People often find that regular, unhurried activity helps maintain balance and coordination throughout the day. Take a moment to type this description at an easy, even pace.',
+    'Regular typing lets us observe timing differences between key presses. Type at your normal pace and let the rhythm emerge naturally.',
+    'The morning light filled the quiet room as she prepared a simple breakfast. Outside, the street was calm after the night rain.',
+    'A short walk through the park helps notice steady breathing and relaxed movement. Type this at an easy, even pace.',
   ];
 
   static const _layer2Passages = [
-    'Typing on a familiar keyboard provides a window into everyday motor patterns that develop over time through repeated use. When you type at your usual pace, the timing between presses, the duration of each hold, and the rhythm across sentences create a personal signature. This passage gives us several lines of continuous typing to capture those subtle characteristics without rushing.',
-    'Consistent daily practice helps establish a reliable personal baseline that reflects your typical interaction with the keyboard. As you complete sessions across different days and times, the system learns what is normal for you specifically. Please type this paragraph as you would any ordinary note, keeping your posture comfortable and your hands relaxed.',
-    'Longer passages allow us to measure not only individual key timing but also how consistency and hand coordination evolve across a full paragraph. Notice the natural pauses between words and the steady return of fingers to home position. There is no need to correct every small mistake — just continue at your natural pace.',
+    'Typing on a familiar keyboard reveals everyday motor patterns that develop through repeated use. Type at your usual pace and let your personal rhythm emerge.',
+    'Daily practice helps establish a reliable baseline that reflects your typical interaction. Please type this as you would any ordinary note, keeping your posture relaxed.',
+    'Notice the natural pauses between words and the steady return of fingers to home position. There is no need to correct every small mistake.',
   ];
 
   Future<void> _loadPrompt() async {
