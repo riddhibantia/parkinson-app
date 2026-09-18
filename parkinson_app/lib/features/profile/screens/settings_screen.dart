@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/theme_mode_provider.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../../checkin/providers/checkin_provider.dart';
 import '../../profile/providers/profile_context_provider.dart';
@@ -88,6 +89,21 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          ListTile(
+            title: const Text('Theme'),
+            subtitle: const Text('Dark is calmer for patients; light/day also available'),
+            trailing: DropdownButton<ThemeMode>(
+              value: ref.watch(themeModeProvider),
+              items: const [
+                DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
+                DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
+                DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
+              ],
+              onChanged: (m) {
+                if (m != null) ref.read(themeModeProvider.notifier).setMode(m);
+              },
+            ),
+          ),
           const Card(
             child: ListTile(
               title: Text('What is collected'),

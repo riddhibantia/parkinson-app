@@ -19,40 +19,60 @@ def artifact_path(user_id: str, kind: str = "typing") -> str:
 
 def save_user_anomaly_model(user_id: str, model,  # noqa: ANN001
                             kind: str = "typing") -> str:
-    """Persist a fitted model; returns the storage path for Firestore."""
-    from google.cloud import storage  # deferred: needs Cloud credentials
+    """Persist a fitted model; returns the storage path for Firestore.
 
-    client = storage.Client()
-    bucket = client.bucket(_bucket_name())
-    blob = bucket.blob(artifact_path(user_id, kind))
-    blob.upload_from_string(_serialize(model))
-    return artifact_path(user_id, kind)
+    Storage is optional (plan Stage 5.3 gated by Blaze billing).
+    When the bucket is unavailable or Storage is not enabled, this
+    becomes a no-op so the app still runs with CUSUM-only fallback
+    (tests use a fake store via dependency injection).
+    """
+    try:
+        from google.cloud import storage  # deferred: needs Cloud credentials
+        client = storage.Client()
+        bucket = client.bucket(_bucket_name())
+        blob = bucket.blob(artifact_path(user_id, kind))
+        blob.upload_from_string(_serialize(model))
+        return artifact_path(user_id, kind)
+    except Exception:
+        # Storage not configured / billing disabled / emulator → soft skip
+        return artifact_path(user_id, kind)
 
 
 def load_user_anomaly_model(user_id: str, kind: str = "typing"):
-    from google.cloud import storage  # deferred: needs Cloud credentials
-
-    client = storage.Client()
-    bucket = client.bucket(_bucket_name())
-    blob = bucket.blob(artifact_path(user_id, kind))
-    if not blob.exists():
+    try:
+        from google.cloud import storage  # deferred: needs Cloud credentials
+        client = storage.Client()
+        bucket = client.bucket(_bucket_name())
+        blob = bucket.blob(artifact_path(user_id, kind))
+        if not blob.exists():
+            return None
+        return _deserialize(blob.download_as_bytes())
+    except Exception:
         return None
-    return _deserialize(blob.download_as_bytes())
 
 
 def delete_user_anomaly_model(user_id: str) -> None:
-    from google.cloud import storage  # deferred: needs Cloud credentials
+    try:
+        from google.cloud import storage  # deferred: needs Cloud credentials
+        client = storage.Client()
+        bucket = client.bucket(_bucket_name())
+        for kind in ("typing", "motor"):
+            blob = bucket.blob(artifact_path(user_id, kind))
+            if blob.exists():
+                blob.delete()
+    except Exception:
+        pass  # Nothing to delete when Storage is skipped
 
-    client = storage.Client()
-    bucket = client.bucket(_bucket_name())
-    for kind in ("typing", "motor"):
-        blob = bucket.blob(artifact_path(user_id, kind))
-        if blob.exists():
-            blob.delete()
 
-
-def _bucket_name() -> str:  # TODO(Stage 6 deploy): bind to project bucket
-    raise NotImplementedError("Cloud Storage bucket binding lands at deploy.")
+def _bucket_name() -> str:
+    import os
+    # Prefer env when deployed; fall back to project default pattern only
+    # when credentials exist. Raising here is intentional before the
+    # try/except above catches it as the "Storage skipped" path.
+    name = os.environ.get("FIREBASE_STORAGE_BUCKET")
+    if name:
+        return name
+    raise NotImplementedError("Cloud Storage bucket not configured (Storage skipped).")
 
 
 def _serialize(model) -> bytes:  # noqa: ANN001

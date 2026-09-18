@@ -5,10 +5,17 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/session_repository.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/gradient_background.dart';
+import '../../../shared/widgets/loading_shimmer.dart';
 import '../../checkin/providers/checkin_provider.dart';
 import '../../reminders/providers/reminder_prefs_provider.dart';
 import '../../typing_test/providers/familiarization_provider.dart';
 import '../providers/streak_provider.dart';
+import '../widgets/baseline_progress.dart';
+import '../widgets/layer_result_card.dart';
+import '../widgets/recommendation_banner.dart';
 
 /// View-model for one result card. Pure mapping from a stored result
 /// document — unit-tested, no widgets involved.
@@ -140,48 +147,57 @@ class DashboardScreen extends ConsumerWidget {
     final milestone = latestMilestoneHit(screeningSessions);
     final next = nextMilestone(screeningSessions);
 
+    final loading = sessionsAsync.isLoading;
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            '${_greeting()}!',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          Text('$screeningSessions screening sessions stored on this device'),
-          if (milestone != null)
-            Card(
-              color: AppColors.statusNormal.withValues(alpha: 0.12),
-              child: ListTile(
-                leading: const Icon(Icons.celebration_outlined),
-                title: Text(
-                  'Milestone: $milestone sessions — nice consistency!',
-                ),
-                subtitle: Text(
-                  next == null
-                      ? 'You are at the top tier. Keep your rhythm steady.'
-                      : '$screeningSessions/$next to the next milestone.',
+      body: GradientBackground(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              '${_greeting()}!',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            Text('$screeningSessions screening sessions stored on this device'),
+            BaselineProgress(screeningSessions: screeningSessions),
+            if (milestone != null)
+              GlassCard(
+                tint: AppColors.statusNormal,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.celebration_outlined),
+                  title: Text(
+                    'Milestone: $milestone sessions — nice consistency!',
+                  ),
+                  subtitle: Text(
+                    next == null
+                        ? 'You are at the top tier. Keep your rhythm steady.'
+                        : '$screeningSessions/$next to the next milestone.',
+                  ),
                 ),
               ),
-            ),
-          Card(
-            child: ListTile(
-              leading: Icon(
-                streak > 0
-                    ? Icons.local_fire_department_outlined
-                    : Icons.snooze_outlined,
-                color: streak > 0 ? AppColors.statusAttention : null,
-              ),
-              title: Text(streak > 0 ? '$streak-day streak' : 'No streak yet'),
-              subtitle: Text(reminderHint),
-              onTap: () => context.go('/profile/settings'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (cards == null) ...[
-            Card(
+            GlassCard(
               child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  streak > 0
+                      ? Icons.local_fire_department_outlined
+                      : Icons.snooze_outlined,
+                  color: streak > 0 ? AppColors.statusAttention : null,
+                ),
+                title:
+                    Text(streak > 0 ? '$streak-day streak' : 'No streak yet'),
+                subtitle: Text(reminderHint),
+                onTap: () => context.go('/profile/settings'),
+              ),
+            ),
+            const SizedBox(height: 16),
+          if (loading) ...[
+            const CardShimmer(),
+          ] else if (cards == null) ...[
+            GlassCard(
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.groups_outlined),
                 title: const Text('General comparison (Layer 1)'),
                 subtitle: Text(
@@ -192,8 +208,9 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            Card(
+            GlassCard(
               child: ListTile(
+                contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.trending_up_outlined),
                 title: const Text('Personal trend (Layer 2)'),
                 subtitle: Text(
@@ -204,13 +221,37 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
           ] else ...[
-            if (cards.primaryFocus == 'layer2') ...[
-              _ResultCard(data: cards.layer2, big: true),
-              _ResultCard(data: cards.layer1, big: false),
-            ] else ...[
-              _ResultCard(data: cards.layer1, big: true),
-              _ResultCard(data: cards.layer2, big: false),
-            ],
+            LayerResultCard(
+              title: cards.primaryFocus == 'layer2'
+                  ? cards.layer2.title
+                  : cards.layer1.title,
+              status: cards.primaryFocus == 'layer2'
+                  ? cards.layer2.status
+                  : cards.layer1.status,
+              message: cards.primaryFocus == 'layer2'
+                  ? cards.layer2.message
+                  : cards.layer1.message,
+              building: cards.primaryFocus == 'layer2'
+                  ? cards.layer2.building
+                  : cards.layer1.building,
+              emphasized: true,
+            ),
+            LayerResultCard(
+              title: cards.primaryFocus == 'layer2'
+                  ? cards.layer1.title
+                  : cards.layer2.title,
+              status: cards.primaryFocus == 'layer2'
+                  ? cards.layer1.status
+                  : cards.layer2.status,
+              message: cards.primaryFocus == 'layer2'
+                  ? cards.layer1.message
+                  : cards.layer2.message,
+            ),
+            RecommendationBanner(
+              status: cards.primaryFocus == 'layer2'
+                  ? cards.layer2.status
+                  : cards.layer1.status,
+            ),
           ],
           if (cards != null &&
               (cards.layer1.status != 'normal' ||
@@ -271,12 +312,15 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ],
           ),
-          if (sessions.isEmpty)
-            const Card(
-              child: ListTile(
-                title: Text('No sessions yet'),
-                subtitle: Text('Your completed sessions will appear here.'),
-              ),
+          if (loading)
+            const LoadingShimmer(height: 64)
+          else if (sessions.isEmpty)
+            EmptyState(
+              icon: Icons.history_outlined,
+              title: 'No sessions yet',
+              subtitle: 'Your completed sessions will appear here.',
+              actionLabel: 'Start typing',
+              onAction: () => context.go('/type'),
             )
           else
             for (final s in sessions.take(3))
@@ -299,32 +343,8 @@ class DashboardScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ResultCard extends StatelessWidget {
-  final LayerCardData data;
-  final bool big;
-  const _ResultCard({required this.data, required this.big});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(
-          data.building ? Icons.hourglass_empty_outlined : Icons.circle,
-          color: data.color,
-          size: big ? 32 : 24,
+          ],
         ),
-        title: Text(
-          data.title,
-          style: big ? Theme.of(context).textTheme.headlineSmall : null,
-        ),
-        subtitle: Text(data.message),
-        isThreeLine: true,
       ),
     );
   }
