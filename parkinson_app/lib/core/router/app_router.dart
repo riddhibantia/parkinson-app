@@ -50,10 +50,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     redirect: (context, state) {
       final loc = state.matchedLocation;
-      final isAuthRoute = loc == '/login' || loc == '/signup';
+      final isAuthRoute = loc == '/login' || loc == '/signup' || loc == '/splash';
       final isOnboarding = loc.startsWith('/onboarding');
-      // Demo users bypass auth — they go through onboarding then home
-      // For simplicity, check SharedPreferences sync via hasOnboarded; Welcome handles demo entry.
       if (!signedIn && !isAuthRoute && !isOnboarding) return '/login';
       if (signedIn && !onboarded && !isOnboarding && !isAuthRoute) {
         return '/onboarding';

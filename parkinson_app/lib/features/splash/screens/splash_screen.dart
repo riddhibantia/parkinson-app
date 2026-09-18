@@ -3,84 +3,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../../shared/widgets/parkin_trace_logo.dart';
 
-class SplashScreen extends ConsumerStatefulWidget {
+class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
 
-  @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends ConsumerState<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      final signedIn = ref.read(isSignedInProvider);
-      final onboarded = ref.read(hasOnboardedProvider);
-      if (!signedIn) {
-        context.go('/login');
-      } else if (!onboarded) {
-        context.go('/onboarding');
-      } else {
-        context.go('/home');
-      }
-    });
+  void _onBegin(BuildContext context, WidgetRef ref) {
+    final signedIn = ref.read(isSignedInProvider);
+    final onboarded = ref.read(hasOnboardedProvider);
+    if (!signedIn) {
+      context.go('/onboarding');
+    } else if (!onboarded) {
+      context.go('/onboarding');
+    } else {
+      context.go('/home');
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.25),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const ParkinTraceLogo(size: 96),
+              const SizedBox(height: 24),
+              Text('ParkinTrace', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 36)),
+              const SizedBox(height: 8),
+              Text("Typing patterns for Parkinson's monitoring",
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: 180,
+                child: ElevatedButton(
+                  onPressed: () => _onBegin(context, ref),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: const Text('BEGIN', style: TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.w700)),
+                ),
               ),
-              child: const Icon(
-                Icons.keyboard_alt_outlined,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'ParkinTrace',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Typing patterns. Personal monitoring.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).textTheme.bodySmall?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
