@@ -34,10 +34,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       _error = null;
     });
     try {
-      await ref.read(authRepositoryProvider).signUp(
-            _email.text.trim(),
-            _password.text,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signUp(_email.text.trim(), _password.text);
       ref.read(isSignedInProvider.notifier).state = true;
       // New users go through onboarding (router guard handles it).
       if (mounted) context.go('/onboarding');
@@ -64,33 +63,53 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 24),
-                      Text('Create account',
-                          style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+                      Text(
+                        'Create account',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 8),
-                      Text('Simple, clean — only email and password.',
-                          style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
+                      Text(
+                        'Simple, clean — only email and password.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 28),
                       TextFormField(
                         controller: _email,
-                        decoration: const InputDecoration(labelText: 'Email', hintText: 'you@example.com'),
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'you@example.com',
+                        ),
                         keyboardType: TextInputType.emailAddress,
-                        validator: (v) =>
-                            (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                        validator: (v) => (v == null || !v.contains('@'))
+                            ? 'Enter a valid email'
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _password,
-                        decoration: const InputDecoration(labelText: 'Password'),
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                        ),
                         obscureText: true,
-                        validator: (v) =>
-                            (v == null || v.length < 6) ? 'At least 6 characters' : null,
+                        validator: (v) => (v == null || v.length < 6)
+                            ? 'At least 6 characters'
+                            : null,
                       ),
                       if (_error != null) ...[
                         const SizedBox(height: 12),
-                        Text(_error!, style: const TextStyle(color: Colors.orange)),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.orange),
+                        ),
                       ],
                       const SizedBox(height: 20),
-                      PrimaryButton(label: _busy ? 'Creating…' : 'Create account', onPressed: _busy ? null : _submit, busy: _busy),
+                      PrimaryButton(
+                        label: _busy ? 'Creating…' : 'Create account',
+                        onPressed: _busy ? null : _submit,
+                        busy: _busy,
+                      ),
                       TextButton(
                         onPressed: () => context.go('/login'),
                         child: const Text('Have an account? Sign in'),

@@ -47,10 +47,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
     try {
-      await ref.read(authRepositoryProvider).signIn(
-            _email.text.trim(),
-            _password.text,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signIn(_email.text.trim(), _password.text);
       ref.read(isSignedInProvider.notifier).state = true;
       if (mounted) context.go('/home');
     } catch (e) {
@@ -63,7 +62,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _forgotPassword() async {
     final email = _email.text.trim();
     if (email.isEmpty) {
-      setState(() => _error = 'Enter your email first, then tap Forgot password.');
+      setState(
+        () => _error = 'Enter your email first, then tap Forgot password.',
+      );
       return;
     }
     try {
@@ -94,42 +95,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 24),
-                      Text('Welcome back',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                          textAlign: TextAlign.center),
+                      Text(
+                        'Welcome back',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 8),
-                      Text('Sign in to continue your personal monitoring journey.',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          textAlign: TextAlign.center),
+                      Text(
+                        'Sign in to continue your personal monitoring journey.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 28),
                       TextFormField(
                         controller: _email,
-                        decoration: const InputDecoration(labelText: 'Email', hintText: 'you@example.com'),
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'you@example.com',
+                        ),
                         keyboardType: TextInputType.emailAddress,
                         validator: _validateEmail,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _password,
-                        decoration: const InputDecoration(labelText: 'Password'),
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                        ),
                         obscureText: true,
                         validator: _validatePassword,
                       ),
                       if (_error != null) ...[
                         const SizedBox(height: 12),
-                        Text(_error!, style: const TextStyle(color: Colors.orange)),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.orange),
+                        ),
                       ],
                       const SizedBox(height: 20),
-                      PrimaryButton(label: _busy ? 'Signing in…' : 'Sign In', onPressed: _busy ? null : _submit, busy: _busy),
+                      PrimaryButton(
+                        label: _busy ? 'Signing in…' : 'Sign In',
+                        onPressed: _busy ? null : _submit,
+                        busy: _busy,
+                      ),
                       TextButton(
                         onPressed: _busy ? null : _forgotPassword,
                         child: const Text('Forgot password?'),
                       ),
                       const Divider(height: 32),
-                      Text("Don't have an account?",
-                          textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        "Don't have an account?",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                       const SizedBox(height: 8),
-                      SecondaryButton(label: 'Create account', onPressed: () => context.go('/signup')),
+                      SecondaryButton(
+                        label: 'Create account',
+                        onPressed: () => context.go('/signup'),
+                      ),
                       const SizedBox(height: 16),
                       OutlinedButton(
                         onPressed: () async {
@@ -139,8 +162,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: const Text('Continue as Guest — Demo'),
                       ),
                       const SizedBox(height: 8),
-                      Text('Demo uses sample data, no diagnosis implied.',
-                          textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        'Demo uses sample data, no diagnosis implied.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),

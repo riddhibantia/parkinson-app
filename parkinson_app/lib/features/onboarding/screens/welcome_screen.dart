@@ -26,11 +26,16 @@ class WelcomeScreen extends ConsumerWidget {
                       width: 72,
                       height: 72,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(Icons.keyboard_alt_outlined,
-                          size: 36, color: Theme.of(context).colorScheme.primary),
+                      child: Icon(
+                        Icons.keyboard_alt_outlined,
+                        size: 36,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -42,7 +47,8 @@ class WelcomeScreen extends ConsumerWidget {
                     Text(
                       'This app studies typing timing and movement patterns to support research-oriented monitoring. It does not diagnose Parkinson\'s disease.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).textTheme.bodySmall?.color),
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),

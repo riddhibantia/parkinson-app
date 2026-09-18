@@ -25,7 +25,9 @@ class AppSidebar extends ConsumerWidget {
       width: 260,
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        border: Border(right: BorderSide(color: Theme.of(context).dividerColor)),
+        border: Border(
+          right: BorderSide(color: Theme.of(context).dividerColor),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,15 +44,29 @@ class AppSidebar extends ConsumerWidget {
                     color: AppColors.primary,
                     borderRadius: AppRadii.radiusMd,
                   ),
-                  child: const Icon(Icons.keyboard_alt_outlined, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.keyboard_alt_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('TypeMonitor', style: Theme.of(context).textTheme.titleSmall),
-                      Text('Research', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7))),
+                      Text(
+                        'TypeMonitor',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        'Research',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -64,15 +80,27 @@ class AppSidebar extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.18),
                 borderRadius: AppRadii.radiusMd,
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.4),
+                ),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.science_outlined, size: 14),
                   const SizedBox(width: 6),
-                  Text('DEMO MODE', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
+                  Text(
+                    'DEMO MODE',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
                   const Spacer(),
-                  Text('Sample data', style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    'Sample data',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
@@ -86,7 +114,10 @@ class AppSidebar extends ConsumerWidget {
               activeIcon: _items[i].$2,
               label: _items[i].$3,
               selected: navigationShell.currentIndex == i,
-              onTap: () => navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex),
+              onTap: () => navigationShell.goBranch(
+                i,
+                initialLocation: i == navigationShell.currentIndex,
+              ),
             ),
           const Spacer(),
           const Divider(height: 1),
@@ -98,18 +129,21 @@ class AppSidebar extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                        onPressed: () => ref.read(appModeProvider.notifier).resetDemo(),
-                        child: const Text('Reset demo')),
+                      onPressed: () =>
+                          ref.read(appModeProvider.notifier).resetDemo(),
+                      child: const Text('Reset demo'),
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
                     width: double.infinity,
                     child: TextButton(
-                        onPressed: () {
-                          ref.read(appModeProvider.notifier).exitDemo();
-                          context.go('/login');
-                        },
-                        child: const Text('Exit demo')),
+                      onPressed: () {
+                        ref.read(appModeProvider.notifier).exitDemo();
+                        context.go('/login');
+                      },
+                      child: const Text('Exit demo'),
+                    ),
                   ),
                 ] else
                   SizedBox(
@@ -120,8 +154,14 @@ class AppSidebar extends ConsumerWidget {
                     ),
                   ),
                 const SizedBox(height: 4),
-                Text('v1.0 · Research preview',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6))),
+                Text(
+                  'v1.0 · Research preview',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
             ),
           ),
@@ -137,14 +177,22 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _NavItem({required this.icon, required this.activeIcon, required this.label, required this.selected, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: Material(
-        color: selected ? AppColors.primary.withValues(alpha: 0.12) : Colors.transparent,
+        color: selected
+            ? AppColors.primary.withValues(alpha: 0.12)
+            : Colors.transparent,
         borderRadius: AppRadii.radiusMd,
         child: InkWell(
           onTap: onTap,
@@ -153,13 +201,19 @@ class _NavItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
-                Icon(selected ? activeIcon : icon,
-                    size: 20, color: selected ? AppColors.primary : null),
+                Icon(
+                  selected ? activeIcon : icon,
+                  size: 20,
+                  color: selected ? AppColors.primary : null,
+                ),
                 const SizedBox(width: 10),
-                Text(label,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        color: selected ? AppColors.primary : null)),
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    color: selected ? AppColors.primary : null,
+                  ),
+                ),
               ],
             ),
           ),

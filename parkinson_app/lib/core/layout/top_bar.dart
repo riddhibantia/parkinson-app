@@ -34,13 +34,23 @@ class AppTopBar extends ConsumerWidget implements PreferredSizeWidget {
             decoration: BoxDecoration(
               color: AppColors.accent.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.4),
+              ),
             ),
-            child: Row(children: [
-              const Icon(Icons.science_outlined, size: 14),
-              const SizedBox(width: 6),
-              Text('DEMO', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, fontWeight: FontWeight.w600)),
-            ]),
+            child: Row(
+              children: [
+                const Icon(Icons.science_outlined, size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  'DEMO',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         IconButton(
           tooltip: 'Settings',

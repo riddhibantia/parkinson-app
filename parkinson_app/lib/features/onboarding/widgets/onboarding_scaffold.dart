@@ -29,7 +29,9 @@ class OnboardingScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: onBack != null ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack) : null,
+        leading: onBack != null
+            ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: onBack)
+            : null,
         title: Text('Step $step of $totalSteps'),
       ),
       body: SafeArea(
@@ -46,13 +48,19 @@ class OnboardingScaffold extends StatelessWidget {
                   Text(title, style: Theme.of(context).textTheme.headlineSmall),
                   if (subtitle != null) ...[
                     const SizedBox(height: 8),
-                    Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      subtitle!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ],
                   const SizedBox(height: 24),
                   Expanded(child: SingleChildScrollView(child: child)),
                   const SizedBox(height: 16),
                   if (onContinue != null)
-                    PrimaryButton(label: continueLabel, onPressed: canContinue ? onContinue : null),
+                    PrimaryButton(
+                      label: continueLabel,
+                      onPressed: canContinue ? onContinue : null,
+                    ),
                 ],
               ),
             ),

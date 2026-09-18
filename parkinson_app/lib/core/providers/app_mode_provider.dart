@@ -6,13 +6,18 @@ enum AppMode { real, demo }
 class AppModeState {
   final AppMode mode;
   final bool hasCompletedOnboarding;
-  const AppModeState({this.mode = AppMode.real, this.hasCompletedOnboarding = false});
+  const AppModeState({
+    this.mode = AppMode.real,
+    this.hasCompletedOnboarding = false,
+  });
 
   bool get isDemo => mode == AppMode.demo;
   AppModeState copyWith({AppMode? mode, bool? hasCompletedOnboarding}) =>
       AppModeState(
-          mode: mode ?? this.mode,
-          hasCompletedOnboarding: hasCompletedOnboarding ?? this.hasCompletedOnboarding);
+        mode: mode ?? this.mode,
+        hasCompletedOnboarding:
+            hasCompletedOnboarding ?? this.hasCompletedOnboarding,
+      );
 }
 
 class AppModeNotifier extends StateNotifier<AppModeState> {
@@ -27,8 +32,9 @@ class AppModeNotifier extends StateNotifier<AppModeState> {
     final idx = p.getInt(_keyMode) ?? 0;
     final onboarded = p.getBool(_keyOnboarded) ?? false;
     state = AppModeState(
-        mode: AppMode.values[idx.clamp(0, AppMode.values.length - 1)],
-        hasCompletedOnboarding: onboarded);
+      mode: AppMode.values[idx.clamp(0, AppMode.values.length - 1)],
+      hasCompletedOnboarding: onboarded,
+    );
   }
 
   Future<void> enterDemo() async {
@@ -51,11 +57,16 @@ class AppModeNotifier extends StateNotifier<AppModeState> {
 
   Future<void> resetDemo() async {
     // clears demo flag + onboarding so wizard re-runs
-    state = const AppModeState(mode: AppMode.demo, hasCompletedOnboarding: false);
+    state = const AppModeState(
+      mode: AppMode.demo,
+      hasCompletedOnboarding: false,
+    );
     final p = await SharedPreferences.getInstance();
     await p.setInt(_keyMode, AppMode.demo.index);
     await p.setBool(_keyOnboarded, false);
   }
 }
 
-final appModeProvider = StateNotifierProvider<AppModeNotifier, AppModeState>((ref) => AppModeNotifier());
+final appModeProvider = StateNotifierProvider<AppModeNotifier, AppModeState>(
+  (ref) => AppModeNotifier(),
+);
