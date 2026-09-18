@@ -14,7 +14,7 @@ class ParkinsonApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final mode = ref.watch(themeModeProvider);
     return MaterialApp.router(
-      title: 'TypeMonitor',
+      title: 'ParkinTrace',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: mode,

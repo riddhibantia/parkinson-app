@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/providers/app_mode_provider.dart';
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/parkin_trace_logo.dart';
 
 class AppTopBar extends ConsumerWidget implements PreferredSizeWidget {
   final String title;
@@ -34,29 +35,17 @@ class AppTopBar extends ConsumerWidget implements PreferredSizeWidget {
             decoration: BoxDecoration(
               color: AppColors.accent.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: AppColors.accent.withValues(alpha: 0.4),
-              ),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.science_outlined, size: 14),
-                const SizedBox(width: 6),
-                Text(
-                  'DEMO',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+            child: Row(children: [
+              const Icon(Icons.science_outlined, size: 14),
+              const SizedBox(width: 6),
+              Text('DEMO', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10, fontWeight: FontWeight.w600)),
+            ]),
           ),
-        IconButton(
-          tooltip: 'Settings',
-          onPressed: () => context.go('/profile/settings'),
-          icon: const Icon(Icons.settings_outlined),
-        ),
+        const ParkinTraceLogo(size: 28),
+        const SizedBox(width: 4),
+        IconButton(tooltip: 'Settings', onPressed: () => context.go('/profile/settings'), icon: const Icon(Icons.settings_outlined)),
         const SizedBox(width: 8),
       ],
     );

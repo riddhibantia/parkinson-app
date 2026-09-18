@@ -16,7 +16,6 @@ import '../../../data/services/local_analysis_service.dart';
 import '../../../shared/widgets/gradient_background.dart';
 import '../providers/last_result_provider.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../typing_test/providers/familiarization_provider.dart';
 import '../widgets/typing_progress_and_timer.dart';
 import '../widgets/typing_prompt.dart';
 
@@ -144,10 +143,7 @@ class _StructuredTypingScreenState
     }
     final isDemo = ref.read(appModeProvider).isDemo;
     final mode = ref.read(analysisModeProvider);
-    final isPractice = mode == AnalysisMode.layer1
-        ? false
-        : !ref.read(familiarizationProvider).screeningReady;
-    // Idempotent session ID — reuse pending on retry
+    // ParkinTrace: no practice — every session is real (Layer1 Session1 = real, Layer2 Session1 = real)
     final sessionId =
         _pendingSession?.sessionId ??
         DateTime.now().millisecondsSinceEpoch.toString();
@@ -162,7 +158,7 @@ class _StructuredTypingScreenState
           startTime: _startedAt ?? DateTime.now(),
           endTime: DateTime.now(),
           mode: 'structured',
-          sessionPhase: isPractice ? 'familiarization' : 'screening',
+          sessionPhase: 'screening',
           events: List.from(_capture.events),
           totalKeystrokes: count,
           deviceId: 'default-keyboard',
@@ -191,12 +187,10 @@ class _StructuredTypingScreenState
         _analyzing = false;
         _saving = false;
       });
-      if (isPractice) {
-        context.go('/type/complete', extra: session);
-      } else if (mode == AnalysisMode.layer1) {
+      if (mode == AnalysisMode.layer1) {
         context.go('/insights/layer1');
       } else {
-        context.go('/insights/layer2');
+        context.go('/session/layer2/${session.sessionId}');
       }
       return;
     }
@@ -216,14 +210,10 @@ class _StructuredTypingScreenState
       await Future.delayed(const Duration(milliseconds: 700));
       if (!mounted) return;
       setState(() => _analyzing = false);
-      if (isPractice) {
-        context.go('/type/complete', extra: session);
-      } else if (mode == AnalysisMode.layer1) {
+      if (mode == AnalysisMode.layer1) {
         context.go('/insights/layer1');
-      } else if (mode == AnalysisMode.layer2) {
-        context.go('/insights/layer2');
       } else {
-        context.go('/type/complete', extra: session);
+        context.go('/session/layer2/${session.sessionId}');
       }
     } catch (e) {
       if (!mounted) return;

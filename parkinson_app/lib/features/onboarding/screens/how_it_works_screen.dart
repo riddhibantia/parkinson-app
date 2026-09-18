@@ -53,7 +53,7 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'TypeMonitor',
+                      'ParkinTrace',
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ],

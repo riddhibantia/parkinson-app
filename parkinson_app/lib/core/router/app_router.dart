@@ -9,6 +9,7 @@ import '../../features/dashboard/screens/detailed_metrics_screen.dart';
 import '../../features/dashboard/screens/history_screen.dart';
 import '../../features/dashboard/screens/layer1_result_screen.dart';
 import '../../features/dashboard/screens/layer2_result_screen.dart';
+import '../../features/dashboard/screens/layer2_session_insight_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
 import '../../features/checkin/screens/checkin_screen.dart';
 import '../../features/onboarding/screens/consent_screen.dart';
@@ -117,6 +118,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/disclaimer',
         builder: (context, state) => const DisclaimerScreen(),
+      ),
+      GoRoute(
+        path: '/session/layer2/:id',
+        builder: (context, state) => Layer2SessionInsightScreen(sessionId: state.pathParameters['id']!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

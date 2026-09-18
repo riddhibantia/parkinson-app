@@ -60,7 +60,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'TypeMonitor',
+              'ParkinTrace',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 4),

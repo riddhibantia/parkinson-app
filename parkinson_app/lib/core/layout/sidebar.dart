@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radii.dart';
 import '../../core/providers/analysis_mode_provider.dart';
 import '../../core/providers/app_mode_provider.dart';
+import '../../shared/widgets/parkin_trace_logo.dart';
 
 class AppSidebar extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
@@ -34,46 +35,10 @@ class AppSidebar extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Brand
+          // Brand — ParkinTrace
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: AppRadii.radiusMd,
-                  ),
-                  child: const Icon(
-                    Icons.keyboard_alt_outlined,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'TypeMonitor',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      Text(
-                        'Research',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            child: const ParkinTraceLogo(size: 36, showWordmark: true),
           ),
           if (analysisMode != null)
             Container(
