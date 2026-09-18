@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/providers/app_mode_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/repositories/session_repository.dart';
+import '../../../data/services/demo_data_service.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/gradient_background.dart';
@@ -133,21 +135,40 @@ class DashboardScreen extends ConsumerWidget {
         .where((s) => !s.isFamiliarization)
         .length;
     final cards = resultCardsFor(resultAsync.valueOrNull);
+    final loading = sessionsAsync.isLoading;
+    final isDemo = ref.watch(appModeProvider).isDemo;
+    final effectiveSessions = (isDemo && sessions.isEmpty) ? DemoDataService.demoSessions() : sessions;
+    final effectiveScreeningCount = effectiveSessions.where((s) => !s.isFamiliarization).length;
+    final effectiveResult = (isDemo && resultAsync.valueOrNull == null)
+        ? {
+            'layer1': DemoDataService.demoLayer1Result(),
+            'layer2': DemoDataService.demoLayer2Result(),
+            'primary_focus': 'layer1',
+            'shap_status': 'completed',
+            '_demo': true,
+          }
+        : resultAsync.valueOrNull;
+    final effectiveCards = resultCardsFor(effectiveResult);
+    final displayCards = effectiveCards ?? cards;
     final streak = ref.watch(streakProvider);
+    final effectiveStreak = isDemo
+        ? computeStreak(
+            effectiveSessions
+                .where((s) => !s.isFamiliarization)
+                .map((s) => s.startTime.toLocal())
+                .toList(),
+            DateTime.now())
+        : streak;
     final reminderHint = ref
         .watch(reminderPrefsProvider.notifier)
         .nextHint(
           now: DateTime.now(),
-          typedToday: sessions.any(
+          typedToday: effectiveSessions.any(
             (s) =>
                 !s.isFamiliarization &&
                 _isSameDay(s.startTime.toLocal(), DateTime.now()),
           ),
         );
-    final milestone = latestMilestoneHit(screeningSessions);
-    final next = nextMilestone(screeningSessions);
-
-    final loading = sessionsAsync.isLoading;
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
       body: GradientBackground(
@@ -158,21 +179,24 @@ class DashboardScreen extends ConsumerWidget {
               '${_greeting()}!',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            Text('$screeningSessions screening sessions stored on this device'),
-            BaselineProgress(screeningSessions: screeningSessions),
-            if (milestone != null)
+            Text(
+                isDemo
+                    ? '$effectiveScreeningCount screening sessions — Sample / Demo Data'
+                    : '$screeningSessions screening sessions stored on this device'),
+            BaselineProgress(screeningSessions: effectiveScreeningCount),
+            if (latestMilestoneHit(effectiveScreeningCount) != null)
               GlassCard(
                 tint: AppColors.statusNormal,
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.celebration_outlined),
                   title: Text(
-                    'Milestone: $milestone sessions — nice consistency!',
+                    'Milestone: ${latestMilestoneHit(effectiveScreeningCount)} sessions — nice consistency!',
                   ),
                   subtitle: Text(
-                    next == null
+                    nextMilestone(effectiveScreeningCount) == null
                         ? 'You are at the top tier. Keep your rhythm steady.'
-                        : '$screeningSessions/$next to the next milestone.',
+                        : '$effectiveScreeningCount/${nextMilestone(effectiveScreeningCount)} to the next milestone.',
                   ),
                 ),
               ),
@@ -180,13 +204,12 @@ class DashboardScreen extends ConsumerWidget {
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(
-                  streak > 0
+                  effectiveStreak > 0
                       ? Icons.local_fire_department_outlined
                       : Icons.snooze_outlined,
-                  color: streak > 0 ? AppColors.statusAttention : null,
+                  color: effectiveStreak > 0 ? AppColors.statusAttention : null,
                 ),
-                title:
-                    Text(streak > 0 ? '$streak-day streak' : 'No streak yet'),
+                title: Text(effectiveStreak > 0 ? '$effectiveStreak-day streak' : 'No streak yet'),
                 subtitle: Text(reminderHint),
                 onTap: () => context.go('/profile/settings'),
               ),
@@ -194,7 +217,7 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 16),
           if (loading) ...[
             const CardShimmer(),
-          ] else if (cards == null) ...[
+          ] else if (displayCards == null) ...[
             GlassCard(
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -216,51 +239,58 @@ class DashboardScreen extends ConsumerWidget {
                 subtitle: Text(
                   'Building — needs 10+ sessions across at least 5 days '
                   'on your usual keyboard '
-                  '($screeningSessions/${AppConstants.minimumSessionsForBaseline}+).',
+                  '($effectiveScreeningCount/${AppConstants.minimumSessionsForBaseline}+).',
                 ),
               ),
             ),
           ] else ...[
+            if (isDemo)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text('Sample / Demo Data — not medical findings',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.statusWatch, fontWeight: FontWeight.w600)),
+              ),
             LayerResultCard(
-              title: cards.primaryFocus == 'layer2'
-                  ? cards.layer2.title
-                  : cards.layer1.title,
-              status: cards.primaryFocus == 'layer2'
-                  ? cards.layer2.status
-                  : cards.layer1.status,
-              message: cards.primaryFocus == 'layer2'
-                  ? cards.layer2.message
-                  : cards.layer1.message,
-              building: cards.primaryFocus == 'layer2'
-                  ? cards.layer2.building
-                  : cards.layer1.building,
+              title: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer2.title
+                  : displayCards.layer1.title,
+              status: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer2.status
+                  : displayCards.layer1.status,
+              message: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer2.message
+                  : displayCards.layer1.message,
+              building: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer2.building
+                  : displayCards.layer1.building,
               emphasized: true,
             ),
             LayerResultCard(
-              title: cards.primaryFocus == 'layer2'
-                  ? cards.layer1.title
-                  : cards.layer2.title,
-              status: cards.primaryFocus == 'layer2'
-                  ? cards.layer1.status
-                  : cards.layer2.status,
-              message: cards.primaryFocus == 'layer2'
-                  ? cards.layer1.message
-                  : cards.layer2.message,
+              title: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer1.title
+                  : displayCards.layer2.title,
+              status: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer1.status
+                  : displayCards.layer2.status,
+              message: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer1.message
+                  : displayCards.layer2.message,
             ),
             RecommendationBanner(
-              status: cards.primaryFocus == 'layer2'
-                  ? cards.layer2.status
-                  : cards.layer1.status,
+              status: displayCards.primaryFocus == 'layer2'
+                  ? displayCards.layer2.status
+                  : displayCards.layer1.status,
             ),
           ],
-          if (cards != null &&
-              (cards.layer1.status != 'normal' ||
-                  cards.layer2.status != 'normal'))
-            _ShapContributors(result: resultAsync.valueOrNull),
+          if (displayCards != null &&
+              (displayCards.layer1.status != 'normal' ||
+                  displayCards.layer2.status != 'normal'))
+            _ShapContributors(result: effectiveResult),
           const SizedBox(height: 8),
           Row(
             children: [
-              _StatChip(label: 'Sessions', value: '$screeningSessions'),
+              _StatChip(label: 'Sessions', value: '$effectiveScreeningCount'),
               const SizedBox(width: 8),
               _StatChip(
                 label: 'Practice',
@@ -314,16 +344,18 @@ class DashboardScreen extends ConsumerWidget {
           ),
           if (loading)
             const LoadingShimmer(height: 64)
-          else if (sessions.isEmpty)
+          else if (effectiveSessions.isEmpty)
             EmptyState(
               icon: Icons.history_outlined,
-              title: 'No sessions yet',
-              subtitle: 'Your completed sessions will appear here.',
+              title: isDemo ? 'Sample sessions' : 'No sessions yet',
+              subtitle: isDemo
+                  ? 'Demo history — 8 sessions across 6 days (Sample Data).'
+                  : 'Your completed sessions will appear here.',
               actionLabel: 'Start typing',
               onAction: () => context.go('/type'),
             )
           else
-            for (final s in sessions.take(3))
+            for (final s in effectiveSessions.take(3))
               Card(
                 child: ListTile(
                   title: Text(

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,7 +25,7 @@ import '../../features/typing_test/screens/motor_task_screen.dart';
 import '../../features/typing_test/screens/session_complete_screen.dart';
 import '../../features/typing_test/screens/structured_typing_screen.dart';
 import '../../features/typing_test/screens/typing_screen.dart';
-import '../../shared/widgets/app_bottom_nav.dart';
+import '../../core/layout/app_shell.dart';
 
 /// GoRouter with auth guards per plan Stage 1.3/1.5:
 /// - not signed in -> /login
@@ -35,15 +34,22 @@ import '../../shared/widgets/app_bottom_nav.dart';
 final appRouterProvider = Provider<GoRouter>((ref) {
   final signedIn = ref.watch(isSignedInProvider);
   final onboarded = ref.watch(hasOnboardedProvider);
-
+  // Demo mode overrides auth requirement
+  // Demo mode is entered via Welcome → AppMode.demo; router treats
+  // demo users as onboarded-after-wizard via hasOnboarded flag.
+  // Keeping read here to trigger rebuild on auth change.
+  // Note: demo state is stored separately; for router we treat demo as signed-in
+  // The WelcomeScreen sets AppMode.demo, then router sees signedIn || isDemo via hasOnboarded guard bypass.
+  // We keep simple: if at /login and already demo, allow /home
   return GoRouter(
     initialLocation: '/home',
     redirect: (context, state) {
       final loc = state.matchedLocation;
       final isAuthRoute = loc == '/login' || loc == '/signup';
       final isOnboarding = loc.startsWith('/onboarding');
-
-      if (!signedIn && !isAuthRoute) return '/login';
+      // Demo users bypass auth — they go through onboarding then home
+      // For simplicity, check SharedPreferences sync via hasOnboarded; Welcome handles demo entry.
+      if (!signedIn && !isAuthRoute && !isOnboarding) return '/login';
       if (signedIn && !onboarded && !isOnboarding && !isAuthRoute) {
         return '/onboarding';
       }
@@ -102,11 +108,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
-          return Scaffold(
-            body: navigationShell,
-            bottomNavigationBar:
-                AppBottomNav(navigationShell: navigationShell),
-          );
+          return AppShell(navigationShell: navigationShell);
         },
         branches: [
           StatefulShellBranch(

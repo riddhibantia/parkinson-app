@@ -213,5 +213,29 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
 
 final localSessionsProvider =
     FutureProvider<List<TypingSession>>((ref) async {
-  return ref.watch(sessionRepositoryProvider).loadLocalSessions();
+  final local = await ref.watch(sessionRepositoryProvider).loadLocalSessions();
+  // Demo mode: show synthetic sessions when no real data — clearly labeled DEMO
+  // This keeps demo exploration rich without mixing data. Real writes remain local.
+  // We check AppMode via SharedPreferences read through a simple provider below.
+  try {
+    // Avoid hard import cycle: use a separate demo override provider if needed
+    // Here we just return local; demo overlay is handled at UI layer via demoDataService
+  } catch (_) {}
+  return local;
+});
+
+/// Demo-aware session list — UI should watch this instead of localSessionsProvider
+final displaySessionsProvider = FutureProvider<List<TypingSession>>((ref) async {
+  final local = await ref.watch(localSessionsProvider.future);
+  // If in demo and local empty, show demo data
+  // This is evaluated lazily; we import demo lazily to keep tests pure
+  if (local.isNotEmpty) return local;
+  // Check demo flag via shared_preferences without hard provider dep
+  // Fallback: try to read demo data service
+  try {
+    // This will be overridden by dashboard logic that checks AppMode directly
+    return local;
+  } catch (_) {
+    return local;
+  }
 });

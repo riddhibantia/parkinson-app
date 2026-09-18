@@ -9,6 +9,6 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: ParkinsonApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in'), findsWidgets);
+    expect(find.textContaining('Sign in', findRichText: true), findsWidgets);
   });
 }

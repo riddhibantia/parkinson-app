@@ -1,27 +1,37 @@
 import 'package:flutter/material.dart';
 
-/// Calming, accessible, health-oriented palette.
-/// NOT generic blues. Status colors never use red.
+/// Calm premium health-tech palette — spacious, minimal, trustworthy.
+/// Dark identity refined: navy/charcoal base, warm white light, single accent.
 class AppColors {
-  // Brand
-  static const Color primary = Color(0xFF0D6E6E); // Deep Teal
-  static const Color secondary = Color(0xFFFF6B6B); // Warm Coral
-  static const Color accent = Color(0xFFFFD93D); // Soft Gold
+  // Brand — refined calmer
+  static const Color primary = Color(0xFF0F766E); // calm teal (muted)
+  static const Color primaryLight = Color(0xFF14B8A6);
+  static const Color secondary = Color(0xFFF97364); // soft coral, less saturated
+  static const Color accent = Color(0xFFFACC15); // muted gold
 
-  // Backgrounds
-  static const Color backgroundDark = Color(0xFF0A0E21); // Off-Black
-  static const Color backgroundLight = Color(0xFFFAF9F6); // Warm White
+  // Backgrounds — deep navy / charcoal vs warm white
+  static const Color backgroundDark = Color(0xFF0F172A); // slate-900 navy
+  static const Color surfaceDark = Color(0xFF1E293B); // slate-800
+  static const Color surfaceDarkElevated = Color(0xFF273449);
+  static const Color backgroundLight = Color(0xFFF8FAFC); // slate-50
+  static const Color surfaceLight = Colors.white;
+  static const Color surfaceLightElevated = Color(0xFFF1F5F9);
 
-  // Status — green / amber / orange only, never red.
-  static const Color statusNormal = Color(0xFF2EAD6B);
-  static const Color statusWatch = Color(0xFFE5A800);
-  static const Color statusAttention = Color(0xFFE67E22);
+  // Text — warm white / soft gray, accessible contrast
+  static const Color textDark = Color(0xFF0F172A);
+  static const Color textLight = Color(0xFFF1F5F9);
+  static const Color textMutedDark = Color(0xFF94A3B8);
+  static const Color textMutedLight = Color(0xFF64748B);
+  static const Color borderDark = Color(0xFF334155);
+  static const Color borderLight = Color(0xFFE2E8F0);
 
-  // Text
-  static const Color textDark = Color(0xFF0A0E21);
-  static const Color textLight = Color(0xFFF5F4EF);
-  static const Color textMutedDark = Color(0xFF8A8FA3);
-  static const Color textMutedLight = Color(0xFF6B6F7E);
+  // Status — green / amber / red (red only for genuine attention)
+  static const Color statusNormal = Color(0xFF10B981); // emerald
+  static const Color statusWatch = Color(0xFFF59E0B); // amber
+  static const Color statusAttention = Color(0xFFEF4444); // red, only when important
+
+  // Legacy aliases
+  static const Color backgroundLightAlias = backgroundLight;
 
   static Color statusFor(String status) {
     switch (status) {

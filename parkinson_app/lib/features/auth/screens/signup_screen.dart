@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../shared/widgets/design_system.dart';
+import '../../../shared/widgets/gradient_background.dart';
 import '../providers/auth_provider.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -49,46 +51,53 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _email,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) =>
-                        (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+      body: GradientBackground(
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 24),
+                      Text('Create account',
+                          style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+                      const SizedBox(height: 8),
+                      Text('Simple, clean — only email and password.',
+                          style: Theme.of(context).textTheme.bodyMedium, textAlign: TextAlign.center),
+                      const SizedBox(height: 28),
+                      TextFormField(
+                        controller: _email,
+                        decoration: const InputDecoration(labelText: 'Email', hintText: 'you@example.com'),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) =>
+                            (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _password,
+                        decoration: const InputDecoration(labelText: 'Password'),
+                        obscureText: true,
+                        validator: (v) =>
+                            (v == null || v.length < 6) ? 'At least 6 characters' : null,
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 12),
+                        Text(_error!, style: const TextStyle(color: Colors.orange)),
+                      ],
+                      const SizedBox(height: 20),
+                      PrimaryButton(label: _busy ? 'Creating…' : 'Create account', onPressed: _busy ? null : _submit, busy: _busy),
+                      TextButton(
+                        onPressed: () => context.go('/login'),
+                        child: const Text('Have an account? Sign in'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _password,
-                    decoration: const InputDecoration(labelText: 'Password'),
-                    obscureText: true,
-                    validator: (v) =>
-                        (v == null || v.length < 6) ? 'At least 6 characters' : null,
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_error!, style: const TextStyle(color: Colors.orange)),
-                  ],
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _busy ? null : _submit,
-                    child: Text(_busy ? 'Creating…' : 'Create account'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go('/login'),
-                    child: const Text('Have an account? Sign in'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

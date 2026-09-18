@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/providers/app_mode_provider.dart';
+import '../../../shared/widgets/design_system.dart';
+import '../../../shared/widgets/gradient_background.dart';
 import '../providers/auth_provider.dart';
 
 String? _validateEmail(String? v) {
@@ -78,48 +81,69 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _email,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: _validateEmail,
+      body: GradientBackground(
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 24),
+                      Text('Welcome back',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                          textAlign: TextAlign.center),
+                      const SizedBox(height: 8),
+                      Text('Sign in to continue your personal monitoring journey.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.center),
+                      const SizedBox(height: 28),
+                      TextFormField(
+                        controller: _email,
+                        decoration: const InputDecoration(labelText: 'Email', hintText: 'you@example.com'),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: _validateEmail,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _password,
+                        decoration: const InputDecoration(labelText: 'Password'),
+                        obscureText: true,
+                        validator: _validatePassword,
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 12),
+                        Text(_error!, style: const TextStyle(color: Colors.orange)),
+                      ],
+                      const SizedBox(height: 20),
+                      PrimaryButton(label: _busy ? 'Signing in…' : 'Sign In', onPressed: _busy ? null : _submit, busy: _busy),
+                      TextButton(
+                        onPressed: _busy ? null : _forgotPassword,
+                        child: const Text('Forgot password?'),
+                      ),
+                      const Divider(height: 32),
+                      Text("Don't have an account?",
+                          textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+                      const SizedBox(height: 8),
+                      SecondaryButton(label: 'Create account', onPressed: () => context.go('/signup')),
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        onPressed: () async {
+                          await ref.read(appModeProvider.notifier).enterDemo();
+                          if (context.mounted) context.go('/onboarding');
+                        },
+                        child: const Text('Continue as Guest — Demo'),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Demo uses sample data, no diagnosis implied.',
+                          textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _password,
-                    decoration: const InputDecoration(labelText: 'Password'),
-                    obscureText: true,
-                    validator: _validatePassword,
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(_error!, style: const TextStyle(color: Colors.orange)),
-                  ],
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _busy ? null : _submit,
-                    child: Text(_busy ? 'Signing in…' : 'Sign in'),
-                  ),
-                  TextButton(
-                    onPressed: _busy ? null : _forgotPassword,
-                    child: const Text('Forgot password?'),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go('/signup'),
-                    child: const Text('New here? Create an account'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
