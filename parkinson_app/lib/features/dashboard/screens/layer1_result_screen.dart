@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:fl_chart/fl_chart.dart';
+
 import '../../../core/layout/top_bar.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -165,6 +167,8 @@ class Layer1ResultScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 const _InteractiveMetricChart(),
+                const SizedBox(height: 12),
+                const _SessionRhythmChart(),
               ],
               if (layer1['top_contributors'] is List &&
                   (layer1['top_contributors'] as List).isNotEmpty) ...[
@@ -366,6 +370,60 @@ class _InteractiveMetricChartState extends ConsumerState<_InteractiveMetricChart
           const SizedBox(height: 8),
           Text('Interactive: switch metric to compare. Bars scaled for display.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SessionRhythmChart extends ConsumerWidget {
+  const _SessionRhythmChart();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final features = ref.watch(lastLocalFeaturesProvider);
+    final base = features?['ht_mean'] ?? 110.0;
+    final spots = List.generate(12, (i) {
+      final x = i.toDouble();
+      final y = base + (i % 3 == 0 ? 6 : -4) + (i * 1.2 % 5);
+      return FlSpot(x, y);
+    });
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Typing rhythm during this session', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Text('Hold time over elapsed time — visual diagram', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 140,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(show: true, drawVerticalLine: false),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 32, getTitlesWidget: (v, m) => Text('${v.toInt()}', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)))),
+                  bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, m) => Text('${v.toInt()}s', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)))),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                borderData: FlBorderData(show: true),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: Theme.of(context).colorScheme.primary,
+                    barWidth: 2.5,
+                    dotData: FlDotData(show: true),
+                    belowBarData: BarAreaData(show: true, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(getTooltipItems: (touched) => touched.map((s) => LineTooltipItem('${s.y.toStringAsFixed(0)} ms', TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600))).toList()),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

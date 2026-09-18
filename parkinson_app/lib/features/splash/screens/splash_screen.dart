@@ -12,7 +12,8 @@ class SplashScreen extends ConsumerWidget {
     final signedIn = ref.read(isSignedInProvider);
     final onboarded = ref.read(hasOnboardedProvider);
     if (!signedIn) {
-      context.go('/onboarding');
+      // Not signed in → go to Login first, then setup (once) after login
+      context.go('/login');
     } else if (!onboarded) {
       context.go('/onboarding');
     } else {
