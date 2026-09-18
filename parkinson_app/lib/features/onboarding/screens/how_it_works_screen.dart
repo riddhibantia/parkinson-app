@@ -23,14 +23,17 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    // 80-90% of available width, capped for readability on ultra-wide
+    final maxW = (width * 0.88).clamp(320.0, 1100.0);
     return Scaffold(
       appBar: const AppTopBar(title: 'How it works'),
       body: GradientBackground(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints: BoxConstraints(maxWidth: maxW),
             child: ListView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
               children: [
                 // Logo consistency
                 Row(
@@ -58,14 +61,17 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                 const SizedBox(height: 24),
                 Text(
                   'The app learns the way you type —\nnot what you type.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.displayLarge?.copyWith(fontSize: 28),
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontSize: 42,
+                    height: 1.05,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   'We analyze typing timing patterns such as hold time, flight time and inter-key latency to understand typing behavior.',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontSize: 18),
                 ),
                 const SizedBox(height: 20),
                 const _Bullet(
@@ -177,7 +183,12 @@ class _Bullet extends StatelessWidget {
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontSize: 17),
+            ),
           ),
         ],
       ),

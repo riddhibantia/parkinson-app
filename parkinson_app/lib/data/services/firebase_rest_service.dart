@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -48,9 +49,9 @@ class FirebaseRestService {
   String? get uid => _uid;
 
   Uri _identity(String method) => Uri.parse(
-        'https://identitytoolkit.googleapis.com/v1/accounts:$method'
-        '?key=$apiKey',
-      );
+    'https://identitytoolkit.googleapis.com/v1/accounts:$method'
+    '?key=$apiKey',
+  );
 
   Future<void> signUp(String email, String password) async {
     final res = await _postJson(_identity('signUp'), {
@@ -110,8 +111,7 @@ class FirebaseRestService {
   Future<void> _refreshIdToken() async {
     final res = await _client
         .post(
-          Uri.parse(
-              'https://securetoken.googleapis.com/v1/token?key=$apiKey'),
+          Uri.parse('https://securetoken.googleapis.com/v1/token?key=$apiKey'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'grant_type': 'refresh_token',
@@ -135,8 +135,8 @@ class FirebaseRestService {
     if (_idToken == null || _refreshToken == null) {
       throw FirebaseRestException('not-signed-in', 'No local session');
     }
-    if (_expiry == null || DateTime.now().isAfter(
-        _expiry!.subtract(const Duration(minutes: 1)))) {
+    if (_expiry == null ||
+        DateTime.now().isAfter(_expiry!.subtract(const Duration(minutes: 1)))) {
       await _refreshIdToken();
     }
     return _idToken!;
@@ -199,18 +199,48 @@ class FirebaseRestService {
 
   /// Create-or-replace a document (PATCH upsert). Path segments relative
   /// to the database documents root, e.g. ['users', uid, 'sessions', id].
-  Future<void> setDocument(
-      List<String> path, Map<String, dynamic> json) async {
+  Future<void> setDocument(List<String> path, Map<String, dynamic> json) async {
+    final docPath = path.join('/');
+    final uri = Uri.parse('$_fsBase/$docPath');
+    Map<String, String> headers;
+    try {
+      headers = await _authHeaders();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          '[FIREBASE DIAG] setDocument pre-auth failed: projectId=$projectId path=$docPath hasToken=${_idToken != null} uid=$_uid error=$e',
+        );
+      }
+      rethrow;
+    }
+    if (kDebugMode) {
+      final hasToken = headers['Authorization'] != null;
+      debugPrint(
+        '[FIREBASE DIAG] firestore-write: projectId=$projectId path=$docPath hasToken=$hasToken uid=$_uid tokenExists=${_idToken != null}',
+      );
+    }
     final res = await _client
         .patch(
-          Uri.parse('$_fsBase/${path.join('/')}'),
-          headers: await _authHeaders(),
+          uri,
+          headers: headers,
           body: jsonEncode({'fields': _encodeMap(json)}),
         )
         .timeout(const Duration(seconds: 15));
+    if (kDebugMode) {
+      debugPrint(
+        '[FIREBASE DIAG] response: status=${res.statusCode} body=${res.body.length > 500 ? res.body.substring(0, 500) : res.body}',
+      );
+    }
     if (res.statusCode != 200) {
-      throw FirebaseRestException('firestore-write: ${res.statusCode}',
-          res.body);
+      if (kDebugMode) {
+        debugPrint(
+          '[FIREBASE DIAG] firestore-write FAILED: projectId=$projectId path=$docPath uid=$_uid status=${res.statusCode}',
+        );
+      }
+      throw FirebaseRestException(
+        'firestore-write: ${res.statusCode}',
+        res.body,
+      );
     }
   }
 
@@ -224,8 +254,10 @@ class FirebaseRestService {
         .timeout(const Duration(seconds: 15));
     if (res.statusCode == 404) return null;
     if (res.statusCode != 200) {
-      throw FirebaseRestException('firestore-read: ${res.statusCode}',
-          res.body);
+      throw FirebaseRestException(
+        'firestore-read: ${res.statusCode}',
+        res.body,
+      );
     }
     return _decodeDocument(jsonDecode(res.body) as Map<String, dynamic>);
   }
@@ -237,28 +269,29 @@ class FirebaseRestService {
   }) async {
     final res = await _client
         .get(
-          Uri.parse('$_fsBase/${collectionPath.join('/')}'
-              '?orderBy=timestamp%20desc&pageSize=$pageSize'),
+          Uri.parse(
+            '$_fsBase/${collectionPath.join('/')}'
+            '?orderBy=timestamp%20desc&pageSize=$pageSize',
+          ),
           headers: await _authHeaders(),
         )
         .timeout(const Duration(seconds: 15));
     if (res.statusCode != 200) {
-      throw FirebaseRestException('firestore-list: ${res.statusCode}',
-          res.body);
+      throw FirebaseRestException(
+        'firestore-list: ${res.statusCode}',
+        res.body,
+      );
     }
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     final docs = (body['documents'] as List?) ?? [];
-    return [
-      for (final d in docs)
-        _decodeDocument(d as Map<String, dynamic>),
-    ];
+    return [for (final d in docs) _decodeDocument(d as Map<String, dynamic>)];
   }
 
   // ---------- Firestore value codec ----------
 
   Map<String, dynamic> _encodeMap(Map<String, dynamic> map) => {
-        for (final e in map.entries) e.key: _encodeValue(e.value),
-      };
+    for (final e in map.entries) e.key: _encodeValue(e.value),
+  };
 
   Map<String, dynamic> _encodeValue(Object? value) {
     if (value == null) return {'nullValue': null};
@@ -286,9 +319,7 @@ class FirebaseRestService {
     }
     if (value is Map) {
       return {
-        'mapValue': {
-          'fields': _encodeMap(Map<String, dynamic>.from(value)),
-        },
+        'mapValue': {'fields': _encodeMap(Map<String, dynamic>.from(value))},
       };
     }
     throw ArgumentError('Unencodable Firestore value: ${value.runtimeType}');
@@ -304,8 +335,8 @@ class FirebaseRestService {
   }
 
   Map<String, dynamic> _decodeMap(Map<String, dynamic> fields) => {
-        for (final e in fields.entries) e.key: _decodeValue(e.value),
-      };
+    for (final e in fields.entries) e.key: _decodeValue(e.value),
+  };
 
   Object? _decodeValue(Object? wire) {
     final map = Map<String, dynamic>.from(wire as Map);

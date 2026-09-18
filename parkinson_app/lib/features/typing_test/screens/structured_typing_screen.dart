@@ -7,11 +7,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/analysis_mode_provider.dart';
+import '../../../core/providers/app_mode_provider.dart';
 import '../../../data/models/typing_session.dart';
 import '../../../data/repositories/session_repository.dart';
-import '../../../shared/widgets/gradient_background.dart';
-import '../../typing_test/providers/familiarization_provider.dart';
+import '../../../data/services/firebase_rest_service.dart';
 import '../../../data/services/keystroke_capture_service.dart';
+import '../../../data/services/local_analysis_service.dart';
+import '../../../shared/widgets/gradient_background.dart';
+import '../providers/last_result_provider.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../typing_test/providers/familiarization_provider.dart';
 import '../widgets/typing_progress_and_timer.dart';
 import '../widgets/typing_prompt.dart';
 
@@ -123,43 +128,95 @@ class _StructuredTypingScreenState
   }
 
   bool _analyzing = false;
+  bool _saving = false;
+  String? _saveError;
+  TypingSession? _pendingSession;
 
   Future<void> _finish() async {
     final count = _capture.events.length;
     if (!_canDone) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Keep typing — finish the passage to enable Done.'),
         ),
       );
       return;
     }
-    setState(() => _analyzing = true);
-    _capture.stopSession();
+    final isDemo = ref.read(appModeProvider).isDemo;
     final isPractice = !ref.read(familiarizationProvider).screeningReady;
-    final session = TypingSession(
-      sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'local',
-      startTime: _startedAt ?? DateTime.now(),
-      endTime: DateTime.now(),
-      mode: 'structured',
-      sessionPhase: isPractice ? 'familiarization' : 'screening',
-      events: List.from(_capture.events),
-      totalKeystrokes: count,
-      deviceId: 'default-keyboard',
-      metadata: const {},
-    );
-    try {
+    final mode = ref.read(analysisModeProvider);
+    // Idempotent session ID — reuse pending on retry
+    final sessionId =
+        _pendingSession?.sessionId ??
+        DateTime.now().millisecondsSinceEpoch.toString();
+    final uid =
+        ref.read(authRepositoryProvider).currentUserId ??
+        (isDemo ? 'demo-user' : 'anonymous');
+    final session =
+        _pendingSession ??
+        TypingSession(
+          sessionId: sessionId,
+          userId: uid,
+          startTime: _startedAt ?? DateTime.now(),
+          endTime: DateTime.now(),
+          mode: 'structured',
+          sessionPhase: isPractice ? 'familiarization' : 'screening',
+          events: List.from(_capture.events),
+          totalKeystrokes: count,
+          deviceId: 'default-keyboard',
+          metadata: const {},
+        );
+    _pendingSession = session;
+    setState(() {
+      _analyzing = true;
+      _saving = true;
+      _saveError = null;
+    });
+    _capture.stopSession();
+
+    // Demo mode: local only, immediate heuristic, no Firestore
+    if (isDemo) {
+      final features = LocalFeatureExtractor.extract(session.events);
+      final heuristic = LocalFeatureExtractor.layer1Heuristic(features);
+      ref.read(lastLocalLayer1ResultProvider.notifier).state = heuristic;
+      ref.read(lastLocalFeaturesProvider.notifier).state = features;
+      // Also buffer locally for history
       await ref.read(sessionRepositoryProvider).saveSession(session);
       ref.invalidate(localSessionsProvider);
-      // Simulate feature extraction + backend analysis delay for UX
-      await Future.delayed(const Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
-      final mode = ref.read(analysisModeProvider);
+      setState(() {
+        _analyzing = false;
+        _saving = false;
+      });
       if (isPractice) {
         context.go('/type/complete', extra: session);
       } else if (mode == AnalysisMode.layer1) {
-        // Layer 1 analyzes immediately — go to dedicated result
+        context.go('/insights/layer1');
+      } else {
+        context.go('/insights/layer2');
+      }
+      return;
+    }
+
+    // Real user: try Firestore write with user-friendly error handling
+    try {
+      // Show Saving...
+      await ref.read(sessionRepositoryProvider).saveSession(session);
+      ref.invalidate(localSessionsProvider);
+      setState(() => _saving = false);
+      // Analyzing...
+      // Run local heuristic for immediate feedback while Cloud Function processes
+      final features = LocalFeatureExtractor.extract(session.events);
+      final heuristic = LocalFeatureExtractor.layer1Heuristic(features);
+      ref.read(lastLocalLayer1ResultProvider.notifier).state = heuristic;
+      ref.read(lastLocalFeaturesProvider.notifier).state = features;
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (!mounted) return;
+      setState(() => _analyzing = false);
+      if (isPractice) {
+        context.go('/type/complete', extra: session);
+      } else if (mode == AnalysisMode.layer1) {
         context.go('/insights/layer1');
       } else if (mode == AnalysisMode.layer2) {
         context.go('/insights/layer2');
@@ -168,11 +225,23 @@ class _StructuredTypingScreenState
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Could not save session: $e')));
-      setState(() => _analyzing = false);
+      // Never show raw FirebaseRestException to user
+      String userMessage = 'Your session could not be saved. Please try again.';
+      if (e is FirebaseRestException && e.code.contains('403')) {
+        userMessage =
+            'Your session could not be saved (permission denied). Please check you are signed in and try again.';
+      }
+      setState(() {
+        _analyzing = false;
+        _saving = false;
+        _saveError = userMessage;
+      });
     }
+  }
+
+  void _retry() {
+    setState(() => _saveError = null);
+    _finish();
   }
 
   @override
@@ -288,7 +357,23 @@ class _StructuredTypingScreenState
                       ),
                     ),
                   const Spacer(),
-                  if (_analyzing)
+                  if (_saving)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 8),
+                          Text('Saving session...'),
+                        ],
+                      ),
+                    ),
+                  if (_analyzing && !_saving)
                     const Padding(
                       padding: EdgeInsets.only(bottom: 12),
                       child: Row(
@@ -304,10 +389,45 @@ class _StructuredTypingScreenState
                         ],
                       ),
                     ),
+                  if (_saveError != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            _saveError!,
+                            style: const TextStyle(color: Color(0xFF991B1B)),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _retry,
+                                  child: const Text('Retry'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => context.go('/type'),
+                                  child: const Text('Back to typing'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   Row(
                     children: [
                       TextButton(
-                        onPressed: _analyzing
+                        onPressed: _analyzing || _saving
                             ? null
                             : () {
                                 _capture.stopSession();
@@ -318,8 +438,16 @@ class _StructuredTypingScreenState
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _analyzing || !_canDone ? null : _finish,
-                          child: Text(_analyzing ? 'Analyzing...' : 'Done'),
+                          onPressed: _analyzing || _saving || !_canDone
+                              ? null
+                              : _finish,
+                          child: Text(
+                            _saving
+                                ? 'Saving...'
+                                : _analyzing
+                                ? 'Analyzing...'
+                                : 'Done',
+                          ),
                         ),
                       ),
                     ],
