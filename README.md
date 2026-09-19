@@ -10,7 +10,7 @@ Live repo: https://github.com/riddhibantia/parkinson-app
 flutter pub get
 flutter run -d windows   # or macos / linux
 # functions (offline pipeline + tests):
-cd parkinson_app/functions && pip install -r requirements.txt && pytest -q
+cd functions && pip install -r requirements.txt && pytest -q
 ```
 
 ## Project layout
@@ -49,7 +49,7 @@ python -m scripts.seed_demo   # prints synthetic sessions
 ```bash
 flutter analyze lib test   # 0 issues
 flutter test               # 34 passed (dashboard mapping, streak, widget smoke, etc.)
-pytest parkinson_app/functions/tests -q  # 57 passed
+pytest functions/tests -q  # 57 passed
 ```
 
 ## Sensitive paths (excluded from git)

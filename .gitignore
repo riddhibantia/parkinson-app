@@ -1,45 +1,89 @@
-﻿# Flutter / Dart
-parkinson_app/build/
-parkinson_app/.dart_tool/
-parkinson_app/.flutter-plugins*
-parkinson_app/.packages
-parkinson_app/android/.gradle/
-parkinson_app/ios/Pods/
-parkinson_app/macos/Pods/
+﻿# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
 *.g.dart.freezed
-# Python
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.gradle/
+/ios/Pods/
+/macos/Pods/
+
+# Python (Cloud Functions / model tooling)
 __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
 venv/
 .pytest_cache/
-# Firebase local
+
+# Firebase local emulators
 .firebase/
 firestore-debug.log
 firestore-debug*.log
 ui-debug.log
 firebase-debug.log
 database-debug.log
-# NOTE: parkinson_app/lib/firebase_options.dart IS tracked on purpose â€”
+
+# NOTE: lib/firebase_options.dart IS tracked on purpose —
 # Firebase client keys are public identifiers and the app won't run
 # without it. Regenerate anytime via `flutterfire configure`.
-# Raw research datasets (~180MB) + archives â€” documented downloads, not code
-parkinson_app/functions/data/tappy_dataset/*.zip
-parkinson_app/functions/data/tappy_dataset/keystrokes/
-parkinson_app/functions/data/tappy_dataset/users/
-parkinson_app/functions/data/neuroqwerty_dataset/*.zip
-parkinson_app/functions/data/neuroqwerty_dataset/nq/
-# Trained model binaries â€” regenerable via functions/models/run_*.py
+
+# Raw research datasets (~180MB) + archives — documented downloads, not code
+functions/data/tappy_dataset/*.zip
+functions/data/tappy_dataset/keystrokes/
+functions/data/tappy_dataset/users/
+functions/data/neuroqwerty_dataset/*.zip
+functions/data/neuroqwerty_dataset/nq/
+
+# Trained model binaries — regenerable via functions/models/run_*.py
 # (RF in ~15s; TabPFN needs its pinned env; finetune needs Colab GPU)
 *.joblib
-# OS / editors
-.DS_Store
+functions/models/colab/colab_bundle.zip
+
+# OS files
 Thumbs.db
-.idea/
 .vscode/
-*.iml
-parkinson_app/functions/models/colab/colab_bundle.zip
+
 # Environment / secrets — never commit real credentials
 .env
 .env.*
