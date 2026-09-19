@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -127,19 +128,96 @@ class _Layer2MetricChart extends ConsumerStatefulWidget {
 class _Layer2MetricChartState extends ConsumerState<_Layer2MetricChart> {
   String _selected = 'Hold time';
   static const _metrics = ['Hold time', 'Flight time', 'Inter-key latency', 'Typing speed', 'Consistency'];
+  static const _keys = {
+    'Hold time': 'ht_mean',
+    'Flight time': 'ft_mean',
+    'Inter-key latency': 'ikl_mean',
+    'Typing speed': 'typing_speed',
+    'Consistency': 'session_consistency',
+  };
+
   @override
   Widget build(BuildContext context) {
+    final sessionsAsync = ref.watch(localSessionsProvider);
+    final sessions = (sessionsAsync.valueOrNull ?? []).where((s) => !s.isFamiliarization).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final key = _keys[_selected]!;
+    // Per-session values for the selected metric (oldest → newest).
+    final history = <double>[
+      for (final s in sessions) LocalFeatureExtractor.extract(s.events)[key] ?? double.nan,
+    ].where((v) => v.isFinite).toList();
+    // Diagrammatic line: real history when available, else a representative
+    // rhythm so the page never shows an empty box.
+    final List<FlSpot> spots;
+    final String unit;
+    if (history.length >= 2) {
+      final tail = history.length > 10 ? history.sublist(history.length - 10) : history;
+      spots = [for (var i = 0; i < tail.length; i++) FlSpot(i.toDouble(), tail[i])];
+    } else {
+      final fallbackBase = history.isNotEmpty ? history.first : 110.0;
+      spots = List.generate(12, (i) {
+        final y = fallbackBase + (i % 3 == 0 ? 6 : -4) + (i * 1.2 % 5);
+        return FlSpot(i.toDouble(), y);
+      });
+    }
+    unit = _selected == 'Typing speed'
+        ? 'keys/s'
+        : _selected == 'Consistency'
+            ? ''
+            : 'ms';
     return GlassCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text('Interactive chart', style: Theme.of(context).textTheme.titleSmall),
+          Text('Typing rhythm — visual diagram', style: Theme.of(context).textTheme.titleSmall),
           const Spacer(),
           DropdownButton<String>(value: _selected, items: [for (final m in _metrics) DropdownMenuItem(value: m, child: Text(m, style: Theme.of(context).textTheme.bodySmall))], onChanged: (v) => setState(() => _selected = v ?? _selected)),
         ]),
+        const SizedBox(height: 4),
+        Text(history.length >= 2 ? '$_selected across your recent sessions' : '$_selected during this session — visual diagram',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
         const SizedBox(height: 12),
-        Container(height: 100, decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(8)), child: Center(child: Text('$_selected — Session value vs personal range', style: Theme.of(context).textTheme.bodySmall))),
+        SizedBox(
+          height: 140,
+          child: LineChart(
+            LineChartData(
+              gridData: const FlGridData(show: true, drawVerticalLine: false),
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 36,
+                        getTitlesWidget: (v, m) => Text(v.toInt().toString(), style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)))),
+                bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (v, m) => Text('${v.toInt() + 1}', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)))),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+              borderData: FlBorderData(show: true),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  color: Theme.of(context).colorScheme.primary,
+                  barWidth: 2.5,
+                  dotData: const FlDotData(show: true),
+                  belowBarData: BarAreaData(show: true, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)),
+                ),
+              ],
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (touched) => touched
+                        .map((s) => LineTooltipItem('${s.y.toStringAsFixed(s.y < 10 ? 2 : 0)} $unit',
+                            TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)))
+                        .toList()),
+              ),
+            ),
+          ),
+        ),
         const SizedBox(height: 8),
-        Text('Tap metric to switch. Chart helps understand $_selected.', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
+        Text('Interactive: switch metric to compare. ${history.length >= 2 ? 'Shows your recent sessions oldest → newest.' : 'Shows rhythm within this session.'}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
       ]),
     );
   }

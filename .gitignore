@@ -40,3 +40,16 @@ Thumbs.db
 .vscode/
 *.iml
 parkinson_app/functions/models/colab/colab_bundle.zip
+# Environment / secrets — never commit real credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+**/service-account*.json
+**/credentials*.json
+**/firebase-admin*.json
+**/*private-key*.json
+# Local Firebase service-account keys (if ever added)
+**/serviceAccountKey.json
+**/admin-sdk*.json

@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../../../shared/widgets/gradient_background.dart';
 import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/design_system.dart';
 import '../../../data/repositories/session_repository.dart';
+import '../../../data/services/local_analysis_service.dart';
 import '../screens/dashboard_screen.dart' show latestResultProvider;
 import '../screens/detailed_metrics_screen.dart' show baselineProvider;
 
@@ -45,6 +47,8 @@ class Layer2ResultScreen extends ConsumerWidget {
               ]),
             ),
             const SizedBox(height: 16),
+            const _Layer2TrendChart(),
+            const SizedBox(height: 16),
             if (isBuilding)
               const GlassCard(child: ListTile(leading: Icon(Icons.hourglass_empty_outlined), title: Text('Building your baseline'), subtitle: Text('Keep typing on the same keyboard across multiple days.')))
             else ...[
@@ -76,6 +80,82 @@ class Layer2ResultScreen extends ConsumerWidget {
             SecondaryButton(label: 'View Insights', onPressed: () => context.go('/insights')),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Diagrammatic line chart for Layer 2: hold-time trend across recent
+/// screening sessions (oldest → newest). Falls back to a representative
+/// rhythm so the page is never an empty box.
+class _Layer2TrendChart extends ConsumerWidget {
+  const _Layer2TrendChart();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sessions = (ref.watch(localSessionsProvider).valueOrNull ?? []).where((s) => !s.isFamiliarization).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final history = <double>[
+      for (final s in sessions) LocalFeatureExtractor.extract(s.events)['ht_mean'] ?? double.nan,
+    ].where((v) => v.isFinite).toList();
+    final List<FlSpot> spots;
+    final String subtitle;
+    if (history.length >= 2) {
+      final tail = history.length > 10 ? history.sublist(history.length - 10) : history;
+      spots = [for (var i = 0; i < tail.length; i++) FlSpot(i.toDouble(), tail[i])];
+      subtitle = 'Hold time across your recent sessions — visual diagram';
+    } else {
+      spots = List.generate(10, (i) => FlSpot(i.toDouble(), 108 + (i % 3 == 0 ? 5 : -3) + (i * 0.8 % 4)));
+      subtitle = 'Baseline rhythm preview — visual diagram';
+    }
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Personal trend', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 130,
+            child: LineChart(
+              LineChartData(
+                gridData: const FlGridData(show: true, drawVerticalLine: false),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 34,
+                          getTitlesWidget: (v, m) => Text('${v.toInt()}', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)))),
+                  bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (v, m) => Text('${v.toInt() + 1}', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)))),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                borderData: FlBorderData(show: true),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: Theme.of(context).colorScheme.primary,
+                    barWidth: 2.5,
+                    dotData: const FlDotData(show: true),
+                    belowBarData: BarAreaData(show: true, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12)),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (touched) => touched
+                          .map((s) => LineTooltipItem('${s.y.toStringAsFixed(0)} ms',
+                              TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)))
+                          .toList()),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

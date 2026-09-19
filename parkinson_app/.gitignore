@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Environment / secrets — keep real credentials out of git
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+**/service-account*.json
+**/credentials*.json
+**/firebase-admin*.json
+**/serviceAccountKey.json

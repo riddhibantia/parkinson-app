@@ -56,7 +56,7 @@ class WelcomeScreen extends ConsumerWidget {
                       label: 'Continue as Guest — Demo',
                       onPressed: () async {
                         await ref.read(appModeProvider.notifier).enterDemo();
-                        if (context.mounted) context.go('/onboarding');
+                        if (context.mounted) context.go('/onboarding/how-it-works');
                       },
                     ),
                     const SizedBox(height: 16),
