@@ -106,7 +106,7 @@ class _Layer2TrendChart extends ConsumerWidget {
       subtitle = 'Hold time across your recent sessions — visual diagram';
     } else {
       spots = List.generate(10, (i) => FlSpot(i.toDouble(), 108 + (i % 3 == 0 ? 5 : -3) + (i * 0.8 % 4)));
-      subtitle = 'Baseline rhythm preview — visual diagram';
+      subtitle = 'Baseline rhythm preview (illustrative) — visual diagram';
     }
     return GlassCard(
       child: Column(

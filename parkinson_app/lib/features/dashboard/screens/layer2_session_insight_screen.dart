@@ -173,7 +173,8 @@ class _Layer2MetricChartState extends ConsumerState<_Layer2MetricChart> {
           DropdownButton<String>(value: _selected, items: [for (final m in _metrics) DropdownMenuItem(value: m, child: Text(m, style: Theme.of(context).textTheme.bodySmall))], onChanged: (v) => setState(() => _selected = v ?? _selected)),
         ]),
         const SizedBox(height: 4),
-        Text(history.length >= 2 ? '$_selected across your recent sessions' : '$_selected during this session — visual diagram',
+        Text(history.length >= 2 ? '$_selected across your recent sessions' : '$_selected — illustrative preview',
+
             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
         const SizedBox(height: 12),
         SizedBox(
@@ -216,7 +217,7 @@ class _Layer2MetricChartState extends ConsumerState<_Layer2MetricChart> {
           ),
         ),
         const SizedBox(height: 8),
-        Text('Interactive: switch metric to compare. ${history.length >= 2 ? 'Shows your recent sessions oldest → newest.' : 'Shows rhythm within this session.'}',
+        Text('Interactive: switch metric to compare. ${history.length >= 2 ? 'Shows your recent sessions oldest → newest.' : 'Illustrative preview until more sessions exist.'}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
       ]),
     );
