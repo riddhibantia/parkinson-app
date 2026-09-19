@@ -36,11 +36,11 @@ flowchart TB
     end
 
     subgraph Backend["Firebase Backend"]
-        B1[Firestore\nusers/{uid}/sessions]
-        B2[Firestore\nusers/{uid}/results]
-        B3[Firestore\nusers/{uid}/baselines/current]
-        B4[Storage\nanomaly_models/{uid}/isolation_forest.joblib]
-        B5[Cloud Functions 2nd Gen\nPython]
+        B1["Firestore\nusers/{uid}/sessions"]
+        B2["Firestore\nusers/{uid}/results"]
+        B3["Firestore\nusers/{uid}/baselines/current"]
+        B4["Storage\nanomaly_models/{uid}/isolation_forest.joblib"]
+        B5["Cloud Functions 2nd Gen\nPython"]
     end
 
     subgraph Pipeline["Single Analysis Pipeline\nfunctions/services/pipeline.py"]
@@ -199,7 +199,7 @@ flowchart TD
     Status1 -->|> 0.66| Attention1[Attention / Distinctly Different]
     
     Layer1 --> SHAP[fill_shap_explanation\nasync SHAP top-contributors]
-    Layer1 -->|save| Results[Firestore\nusers/{uid}/results/{id}]
+    Layer1 -->|save| Results["Firestore\nusers/{uid}/results/{id}"]
     
     Extract --> Layer2{Layer 2 Active?}
     Layer2 -->|no| End([Layer 1 Complete])
@@ -218,8 +218,8 @@ flowchart TD
     Status2 -->|some elevated| Watch2[Watch / Some Change]
     Status2 -->|persistent shift| Attention2[Attention / Sustained Change]
     
-    Drift -->|save| BaselineDoc[Firestore\nusers/{uid}/baselines/current]
-    Anomaly -->|save| ModelBlob[Storage\nanomaly_models/{uid}/\nisolation_forest.joblib]
+    Drift -->|save| BaselineDoc["Firestore\nusers/{uid}/baselines/current"]
+    Anomaly -->|save| ModelBlob["Storage\nanomaly_models/{uid}/\nisolation_forest.joblib"]
     Status2 -->|save| Results
     
     FamiliarizationSessions --> End
@@ -310,9 +310,7 @@ flowchart LR
         S1["anomaly_models/{uid}/*\nallow read, write: if request.auth != null\n&& request.auth.uid == uid"]
     end
 
-    function isOwner(uid) {
-      return request.auth != null && request.auth.uid == uid;
-    }
+    Note["isOwner(uid): request.auth != null && request.auth.uid == uid"]
 ```
 
 ---
@@ -343,10 +341,10 @@ flowchart TD
     S9["device_guard.py"]
 
     %% Persistence
-    DB1[Firestore\nusers/{uid}/sessions]
-    DB2[Firestore\nusers/{uid}/results]
-    DB3[Firestore\nusers/{uid}/baselines/current]
-    ST1[Storage\nanomaly_models/{uid}/isolation_forest.joblib]
+    DB1["Firestore\nusers/{uid}/sessions"]
+    DB2["Firestore\nusers/{uid}/results"]
+    DB3["Firestore\nusers/{uid}/baselines/current"]
+    ST1["Storage\nanomaly_models/{uid}/isolation_forest.joblib"]
 
     %% Connections
     E1 -->|save| DB1
