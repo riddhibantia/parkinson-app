@@ -26,8 +26,8 @@ from app.core.constants import (
 )
 
 _SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
-# services -> app -> backend -> parkintrace -> repo root
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(_SERVICES_DIR))))
+# services -> app -> backend -> repo root
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(_SERVICES_DIR)))
 LEGACY_ARTIFACT = os.path.join(
     _REPO_ROOT, "functions", "models", "experiments", "rf", "model_full.joblib")
 LEGACY_SCALER = os.path.join(

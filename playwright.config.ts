@@ -3,7 +3,7 @@ import path from "path";
 
 const PORT = 3111;
 const API_PORT = 8101;
-const BACKEND = path.resolve(__dirname, "../backend");
+const BACKEND = path.resolve(__dirname, "backend");
 const VENV_PY = path.join(BACKEND, ".venv", "Scripts", "python");
 
 export default defineConfig({

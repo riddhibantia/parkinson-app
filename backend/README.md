@@ -6,7 +6,7 @@ Typing-pattern screening (Layer 1, RF) + longitudinal monitoring
 ## Run
 
 ```bash
-cd parkintrace/backend
+cd backend
 pip install -r requirements.txt   # pins scikit-learn==1.6.1 (artifact compat)
 pytest -q
 uvicorn app.main:app --reload

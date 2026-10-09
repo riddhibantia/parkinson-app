@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 
 _SERVICES_DIR = os.path.dirname(os.path.abspath(__file__))
-_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(_SERVICES_DIR))))
+# services -> app -> backend -> repo root
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(_SERVICES_DIR)))
 ARTIFACT = os.environ.get(
     "PARKINTRACE_RF_ARTIFACT",
     os.path.join(_REPO_ROOT, "functions", "models", "experiments",
