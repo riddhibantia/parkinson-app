@@ -1,7 +1,7 @@
 # ParkinTrace — Keystroke-Dynamics Based Parkinson's Screening & Longitudinal Monitoring System.
 
 > **Academic Research Project** — Submitted in partial fulfillment of degree requirements.  
-> This repository is maintained for academic evaluation and demonstration purposes. It is **not** an open-source product and is **not licensed for public distribution or commercial use**.
+> This repository is maintained for academic evaluation and demonstration purposes. It is **not** an open-source product and is **not licensed for public distribution or commercial use**
 
 ---
 
