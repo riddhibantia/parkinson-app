@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: parkintrace-api
+    runtime: python
+    rootDir: parkintrace/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.11
+      - key: APP_ENV
+        value: production
+      # Set in the Render dashboard (never committed):
+      # - key: SUPABASE_URL
+      # - key: SUPABASE_SERVICE_KEY (secret)
+      # - key: PARKINTRACE_RF_ARTIFACT (if baked image path differs)
+      # - key: PARKINTRACE_RF_SCALER
